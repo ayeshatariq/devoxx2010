@@ -41,9 +41,11 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.BaseColumns;
 import android.text.format.DateUtils;
+import android.util.SparseBooleanArray;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.MenuInflater;
@@ -78,13 +80,13 @@ public class NotesActivity extends ListActivity implements AsyncQueryListener {
 	
     public static final String EXTRA_SHOW_INSERT = "net.peterkuterna.android.apps.devoxxsched.extra.SHOW_INSERT";
     
-    private static final String DIALOG_NOTE_ID_ARG = "id";
-
     private Uri notesUri;
     private NotesAdapter mAdapter;
 
     private boolean mShowInsert = false;
     private boolean categoryTab = false;
+    
+    private long deleteId = -1;
 
     private NotifyingAsyncQueryHandler mHandler;
 
@@ -136,6 +138,7 @@ public class NotesActivity extends ListActivity implements AsyncQueryListener {
         registerForContextMenu(getListView());
 
         mHandler = new NotifyingAsyncQueryHandler(getContentResolver(), this);
+        startQuery();
     }
 
 	@Override
@@ -154,9 +157,8 @@ public class NotesActivity extends ListActivity implements AsyncQueryListener {
 		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
 		switch (item.getItemId()) {
 		case R.id.menu_delete_note:
-			Bundle bundle = new Bundle();
-			bundle.putLong(DIALOG_NOTE_ID_ARG, info.id);
-			showDialog(R.id.dialog_delete_confirm, bundle);
+			deleteId = info.id;
+			showDialog(R.id.dialog_delete_confirm);
 			return true;
 		default:
 			return super.onContextItemSelected(item);
@@ -164,35 +166,22 @@ public class NotesActivity extends ListActivity implements AsyncQueryListener {
 	}
     
     @Override
-    protected void onResume() {
-        startQuery();
-
-        super.onResume();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mAdapter.changeCursor(null);
-    }
-
-    @Override
-	protected void onPrepareDialog(int id, Dialog dialog, Bundle args) {
+	protected void onPrepareDialog(int id, Dialog dialog) {
         switch (id) {
         	case R.id.dialog_delete_confirm:
-        		long notesId = args.getLong(DIALOG_NOTE_ID_ARG);
         		((AlertDialog) dialog).setButton(
         				AlertDialog.BUTTON_POSITIVE, 
         				getString(android.R.string.ok), 
-        				new DeleteConfirmClickListener(notesId));
+        				new DeleteConfirmClickListener(deleteId));
+        		deleteId = -1;
         		break;
         	default:
-        		super.onPrepareDialog(id, dialog, args);
+        		super.onPrepareDialog(id, dialog);
         }
 	}
 
 	@Override
-    protected Dialog onCreateDialog(int id, Bundle bundle) {
+    protected Dialog onCreateDialog(int id) {
         switch (id) {
             case R.id.dialog_delete_confirm: {
                 return new AlertDialog.Builder(this)
@@ -205,7 +194,7 @@ public class NotesActivity extends ListActivity implements AsyncQueryListener {
                         .create();
             }
         }
-        return super.onCreateDialog(id, bundle);
+        return super.onCreateDialog(id);
     }
 
     private class DeleteConfirmClickListener implements DialogInterface.OnClickListener {
@@ -218,12 +207,14 @@ public class NotesActivity extends ListActivity implements AsyncQueryListener {
 		public void onClick(DialogInterface dialog, int which) {
 			final Uri uri = Notes.buildNoteUri(notesId);
 			mHandler.startDelete(uri);
-			mAdapter.onContentChanged();
+			mAdapter.getCursor().requery();
         }
     }
 
     /** {@inheritDoc} */
     public void onQueryComplete(int token, Object cookie, Cursor cursor) {
+    	startManagingCursor(cursor);
+    	cursor.setNotificationUri(getContentResolver(), Notes.CONTENT_URI);
         mAdapter.changeCursor(cursor);
     }
 
@@ -279,14 +270,11 @@ public class NotesActivity extends ListActivity implements AsyncQueryListener {
     
     private class NotesAdapter extends GroupingListAdapter implements View.OnClickListener {
     	
-    	public NotesAdapter(Context context) {
+        private SparseBooleanArray mExpandedCache = new SparseBooleanArray();
+
+        public NotesAdapter(Context context) {
     		super(context);
     	}
-
-        @Override
-        protected void onContentChanged() {
-            startQuery();
-        }
 
         @Override
 		public void onClick(View view) {
@@ -298,6 +286,7 @@ public class NotesActivity extends ListActivity implements AsyncQueryListener {
 		@Override
 		protected void addGroups(Cursor cursor) {
 			int count = cursor.getCount();
+
 			if (categoryTab || count == 0) {
 				return;
 			}
@@ -328,6 +317,32 @@ public class NotesActivity extends ListActivity implements AsyncQueryListener {
 		}
 
 		@Override
+		protected void addGroup(int cursorPosition, int size, boolean expanded) {
+			final Cursor cursor = getCursor();
+	        int curPos = cursor.getPosition();
+	        cursor.moveToPosition(cursorPosition);
+	    	int sessionId = cursor.getInt(NotesQuery.SESSION_ID);
+	        cursor.moveToPosition(curPos);
+	    	boolean newExpanded = mExpandedCache.get(sessionId, expanded);
+	        mExpandedCache.put(sessionId, newExpanded);
+
+	        super.addGroup(cursorPosition, size, newExpanded);
+		}
+
+		@Override
+		public void toggleGroup(int position) {
+			PositionMetadata positionMetadata = new PositionMetadata();
+	        obtainPositionMetadata(positionMetadata, position);
+
+			final Cursor cursor = getCursor();
+			cursor.moveToPosition(positionMetadata.cursorPosition);
+	    	int sessionId = cursor.getInt(NotesQuery.SESSION_ID);
+	        super.toggleGroup(position);
+
+	        mExpandedCache.put(sessionId, !positionMetadata.isExpanded);
+		}
+
+		@Override
 		protected void bindChildView(View view, Context context, Cursor cursor) {
 			bindStandAloneView(view, context, cursor);
 		}
@@ -343,7 +358,9 @@ public class NotesActivity extends ListActivity implements AsyncQueryListener {
 			Integer colorKey = cursor.getInt(NotesQuery.TRACK_COLOR);
 			views.gotoSessionView.setOnClickListener(this);
 			views.gotoSessionView.setImageResource(R.drawable.sym_action_goto_session);
-			views.gotoSessionView.setColorFilter(colorKey, Mode.SRC_ATOP);
+			if (Build.VERSION_CODES.FROYO == Build.VERSION.SDK_INT) {
+				views.gotoSessionView.setColorFilter(colorKey, Mode.SRC_ATOP);
+			}
 			views.gotoSessionView.setTag(cursor.getString(NotesQuery.SESSION_ID));
 			views.sessionTitle.setText(cursor.getString(NotesQuery.SESSION_TITLE));
 			Drawable drawable = createGroupBackgroundDrawable(colorKey);

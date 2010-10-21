@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-
+/*
+ * Adapted by Peter Kuterna for the Devoxx conference
+ */
 package net.peterkuterna.android.apps.devoxxsched.ui;
 
 import net.peterkuterna.android.apps.devoxxsched.util.ArrayUtils;
@@ -80,6 +82,7 @@ public abstract class GroupingListAdapter extends BaseAdapter {
     private long[] mGroupMetadata;
 
     private SparseIntArray mPositionCache = new SparseIntArray();
+    
     private int mLastCachedListPosition;
     private int mLastCachedCursorPosition;
     private int mLastCachedGroup;
@@ -89,34 +92,15 @@ public abstract class GroupingListAdapter extends BaseAdapter {
      */
     private PositionMetadata mPositionMetadata = new PositionMetadata();
 
-    protected ContentObserver mChangeObserver = new ContentObserver(new Handler()) {
+    protected boolean mDataValid;
+    
+    protected ChangeObserver mChangeObserver;
 
-        @Override
-        public boolean deliverSelfNotifications() {
-            return true;
-        }
-
-        @Override
-        public void onChange(boolean selfChange) {
-            onContentChanged();
-        }
-    };
-
-    protected DataSetObserver mDataSetObserver = new DataSetObserver() {
-
-        @Override
-        public void onChanged() {
-            notifyDataSetChanged();
-        }
-
-        @Override
-        public void onInvalidated() {
-            notifyDataSetInvalidated();
-        }
-    };
+    protected DataSetObserver mDataSetObserver = new MyDataSetObserver();
 
     public GroupingListAdapter(Context context) {
         mContext = context;
+        mChangeObserver = new ChangeObserver();
         resetCache();
     }
 
@@ -149,13 +133,16 @@ public abstract class GroupingListAdapter extends BaseAdapter {
     }
 
     protected void onContentChanged() {
+    	if (mCursor != null && !mCursor.isClosed()) {
+    		mDataValid = mCursor.requery();
+    	}
     }
 
     public void changeCursor(Cursor cursor) {
         if (cursor == mCursor) {
             return;
         }
-
+        
         if (mCursor != null) {
             mCursor.unregisterContentObserver(mChangeObserver);
             mCursor.unregisterDataSetObserver(mDataSetObserver);
@@ -164,17 +151,18 @@ public abstract class GroupingListAdapter extends BaseAdapter {
         mCursor = cursor;
         resetCache();
         findGroups();
-
         if (cursor != null) {
             cursor.registerContentObserver(mChangeObserver);
             cursor.registerDataSetObserver(mDataSetObserver);
             mRowIdColumnIndex = cursor.getColumnIndexOrThrow("_id");
+            mDataValid = true;
             notifyDataSetChanged();
         } else {
+        	mRowIdColumnIndex = -1;
+        	mDataValid = false;
             // notify the observers about the lack of a data set
             notifyDataSetInvalidated();
         }
-
     }
 
     public Cursor getCursor() {
@@ -201,6 +189,8 @@ public abstract class GroupingListAdapter extends BaseAdapter {
      * {@link #addGroups} method.
      */
     protected void addGroup(int cursorPosition, int size, boolean expanded) {
+
+    	
         if (mGroupCount >= mGroupMetadata.length) {
             int newSize = ArrayUtils.idealLongArraySize(
                     mGroupMetadata.length + GROUP_METADATA_ARRAY_INCREMENT);
@@ -217,35 +207,32 @@ public abstract class GroupingListAdapter extends BaseAdapter {
     }
 
     public int getCount() {
-        if (mCursor == null) {
-            return 0;
+        if (mDataValid && mCursor != null) {
+	        int cursorPosition = 0;
+	        int count = 0;
+	        for (int i = 0; i < mGroupCount; i++) {
+	            long metadata = mGroupMetadata[i];
+	            int offset = (int)(metadata & GROUP_OFFSET_MASK);
+	            boolean expanded = (metadata & EXPANDED_GROUP_MASK) != 0;
+	            int size = (int)((metadata & GROUP_SIZE_MASK) >> 32);
+	
+	            count += (offset - cursorPosition);
+	
+	            if (expanded) {
+	                count += size + 1;
+	            } else {
+	                count++;
+	            }
+	
+	            cursorPosition = offset + size;
+	        }
+	
+	        mCount = count + mCursor.getCount() - cursorPosition;
+
+	        return mCount;
+        } else {
+        	return 0;
         }
-
-        if (mCount != -1) {
-            return mCount;
-        }
-
-        int cursorPosition = 0;
-        int count = 0;
-        for (int i = 0; i < mGroupCount; i++) {
-            long metadata = mGroupMetadata[i];
-            int offset = (int)(metadata & GROUP_OFFSET_MASK);
-            boolean expanded = (metadata & EXPANDED_GROUP_MASK) != 0;
-            int size = (int)((metadata & GROUP_SIZE_MASK) >> 32);
-
-            count += (offset - cursorPosition);
-
-            if (expanded) {
-                count += size + 1;
-            } else {
-                count++;
-            }
-
-            cursorPosition = offset + size;
-        }
-
-        mCount = count + mCursor.getCount() - cursorPosition;
-        return mCount;
     }
 
     /**
@@ -396,12 +383,12 @@ public abstract class GroupingListAdapter extends BaseAdapter {
             throw new IllegalArgumentException("Not a group at position " + position);
         }
 
-
         if (mPositionMetadata.isExpanded) {
             mGroupMetadata[mPositionMetadata.groupPosition] &= ~EXPANDED_GROUP_MASK;
         } else {
             mGroupMetadata[mPositionMetadata.groupPosition] |= EXPANDED_GROUP_MASK;
         }
+       
         resetCache();
         notifyDataSetChanged();
     }
@@ -418,29 +405,41 @@ public abstract class GroupingListAdapter extends BaseAdapter {
     }
 
     public Object getItem(int position) {
-        if (mCursor == null) {
-            return null;
-        }
-
-        obtainPositionMetadata(mPositionMetadata, position);
-        if (mCursor.moveToPosition(mPositionMetadata.cursorPosition)) {
-            return mCursor;
+        if (mDataValid && mCursor != null) {
+	        obtainPositionMetadata(mPositionMetadata, position);
+	        if (mCursor.moveToPosition(mPositionMetadata.cursorPosition)) {
+	            return mCursor;
+	        } else {
+	            return null;
+	        }
         } else {
-            return null;
+        	return null;
         }
     }
 
     public long getItemId(int position) {
-        Object item = getItem(position);
-        if (item != null) {
-            return mCursor.getLong(mRowIdColumnIndex);
-        } else {
-            return -1;
-        }
+    	if (mDataValid && mCursor != null) {
+	        Object item = getItem(position);
+	        if (item != null) {
+	            return mCursor.getLong(mRowIdColumnIndex);
+	        } else {
+	            return -1;
+	        }
+    	} else {
+    		return -1;
+    	}
     }
 
     public View getView(int position, View convertView, ViewGroup parent) {
+    	if (!mDataValid) {
+    		throw new IllegalStateException("this should only be called when the cursor is valid");
+    	}
+    	
         obtainPositionMetadata(mPositionMetadata, position);
+        if (!mCursor.moveToPosition(mPositionMetadata.cursorPosition)) {
+        	throw new IllegalStateException("couldn't move cursor to position " + mPositionMetadata.cursorPosition);
+        }
+        
         View view = convertView;
         if (view == null) {
             switch (mPositionMetadata.itemType) {
@@ -456,7 +455,6 @@ public abstract class GroupingListAdapter extends BaseAdapter {
             }
         }
 
-        mCursor.moveToPosition(mPositionMetadata.cursorPosition);
         switch (mPositionMetadata.itemType) {
             case ITEM_TYPE_STANDALONE:
                 bindStandAloneView(view, mContext, mCursor);
@@ -472,5 +470,41 @@ public abstract class GroupingListAdapter extends BaseAdapter {
         }
         return view;
     }
+
+	private class ChangeObserver extends ContentObserver {
+
+		public ChangeObserver() {
+			super(new Handler());
+		}
+
+		@Override
+		public boolean deliverSelfNotifications() {
+			return true;
+		}
+
+		@Override
+		public void onChange(boolean selfChange) {
+			onContentChanged();
+		}
+		
+	}
+	
+	private class MyDataSetObserver extends DataSetObserver {
+
+		@Override
+		public void onChanged() {
+			mDataValid = true;
+			resetCache();
+			findGroups();
+			notifyDataSetChanged();
+		}
+
+		@Override
+		public void onInvalidated() {
+			mDataValid = false;
+			notifyDataSetInvalidated();
+		}
+		
+	}
     
 }
