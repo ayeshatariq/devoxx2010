@@ -26,8 +26,10 @@ import java.util.Map.Entry;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Sessions;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Speakers;
+import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Tags;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Tracks;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleDatabase.SessionsSpeakers;
+import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleDatabase.SessionsTags;
 import net.peterkuterna.android.apps.devoxxsched.util.Lists;
 import net.peterkuterna.android.apps.devoxxsched.util.Maps;
 import net.peterkuterna.android.apps.devoxxsched.util.Sets;
@@ -180,6 +182,30 @@ public class RemoteSessionsHandler extends JSONHandler {
 			    	}
 			    	
 			    	sessionSpeakerIds.put(sessionId, speakerIds);
+			    }
+			    
+			    if (session.has("tags")) {
+				    final Uri tagSessionsUri = Sessions.buildTagsDirUri(sessionId);
+			    	final JSONArray tags = session.getJSONArray("tags");
+			    	final HashSet<String> tagIds = Sets.newHashSet();
+			    	
+			    	if (!isLocalSync()) {
+			    	}
+			    	
+			    	for (int j = 0; j < tags.length(); j++) {
+			    		JSONObject tag = tags.getJSONObject(j);
+			    		final String tagName = tag.getString("name").toLowerCase();
+			    		final String tagId = Tags.generateTagId(tagName);
+			    		tagIds.add(tagId);
+			    		
+			            batch.add(ContentProviderOperation.newInsert(Tags.CONTENT_URI)
+					            .withValue(Tags.TAG_ID, tagId)
+			            		.withValue(Tags.TAG_NAME, tagName).build());
+			    		
+			    		batch.add(ContentProviderOperation.newInsert(tagSessionsUri)
+			    				.withValue(SessionsTags.TAG_ID, tagId)
+			    				.withValue(SessionsTags.SESSION_ID, sessionId).build());
+			    	}
 			    }
 	        }
 		}

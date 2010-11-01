@@ -113,6 +113,13 @@ public class ScheduleContract {
         /** URL towards image of speaker. */
     	String IMAGE_URL = "image_url";
     }
+    
+    interface TagsColumns {
+    	/** Unique string identifying this tag. */
+    	String TAG_ID = "tag_id";
+    	/** Tag name. */
+    	String TAG_NAME = "tag_name";
+    }
 
     interface NotesColumns {
         /** Time this note was created. */
@@ -139,6 +146,7 @@ public class ScheduleContract {
     private static final String PATH_AT = "at";
     private static final String PATH_BETWEEN = "between";
     private static final String PATH_PARALLEL = "parallel";
+    private static final String PATH_TAGS = "tags";
     private static final String PATH_SEARCH = "search";
     private static final String PATH_SEARCH_SUGGEST = "search_suggest_query";
     private static final String PATH_SYNC = "sync";
@@ -254,6 +262,51 @@ public class ScheduleContract {
     }
 
     /**
+     * Tags.
+     */
+    public static class Tags implements TagsColumns, BaseColumns {
+        public static final Uri CONTENT_URI =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_TAGS).build();
+
+        public static final String CONTENT_TYPE =
+                "vnd.android.cursor.dir/vnd.devoxx.tag";
+        public static final String CONTENT_ITEM_TYPE =
+                "vnd.android.cursor.item/vnd.devoxx.tag";
+
+        /** Count of {@link Sessions} inside given tag. */
+        public static final String SESSIONS_COUNT = "sessions_count";
+
+        /** Default "ORDER BY" clause. */
+        public static final String DEFAULT_SORT = TagsColumns.TAG_NAME + " ASC";
+
+        /** Build {@link Uri} for requested {@link #TAG_ID}. */
+        public static Uri buildTagUri(String tagId) {
+            return CONTENT_URI.buildUpon().appendPath(tagId).build();
+        }
+
+        /**
+         * Build {@link Uri} that references any {@link Sessions} associated
+         * with the requested {@link #TAG_ID}.
+         */
+        public static Uri buildSessionsDirUri(String tagId) {
+            return CONTENT_URI.buildUpon().appendPath(tagId).appendPath(PATH_SESSIONS).build();
+        }
+
+        /** Read {@link #TAG_ID} from {@link Tags} {@link Uri}. */
+        public static String getTagId(Uri uri) {
+            return uri.getPathSegments().get(1);
+        }
+
+        /**
+         * Generate a {@link #TAG_ID} that will always match the requested
+         * {@link Tags} details.
+         */
+        public static String generateTagId(String tagName) {
+            return ParserUtils.sanitizeId(tagName);
+        }
+    }
+
+    /**
      * Rooms are physical locations at the conference venue.
      */
     public static class Rooms implements RoomsColumns, BaseColumns {
@@ -332,6 +385,14 @@ public class ScheduleContract {
          */
         public static Uri buildSpeakersDirUri(String sessionId) {
             return CONTENT_URI.buildUpon().appendPath(sessionId).appendPath(PATH_SPEAKERS).build();
+        }
+
+        /**
+         * Build {@link Uri} that references any {@link Tags} associated
+         * with the requested {@link #SESSION_ID}.
+         */
+        public static Uri buildTagsDirUri(String sessionId) {
+            return CONTENT_URI.buildUpon().appendPath(sessionId).appendPath(PATH_TAGS).build();
         }
 
         /** Build {@link Uri} for requested {@link #SESSION_ID} for given {@link Speakers} with given {@link #SPEAKER_ID} */

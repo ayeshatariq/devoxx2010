@@ -98,6 +98,7 @@
     <string name="session_type">Type</string>
     <string name="session_note">Note</string>
     <string name="session_speakers">Speakers</string>
+    <string name="session_tags">Tags</string>
 
     <string name="session_subtitle"><xliff:g id="time">%1$s</xliff:g> in <xliff:g id="room">%2$s</xliff:g></string>
 

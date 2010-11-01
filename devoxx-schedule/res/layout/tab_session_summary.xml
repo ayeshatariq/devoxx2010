@@ -50,6 +50,25 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/session_tags_block"
+            android:orientation="vertical"
+            android:paddingBottom="10dp"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="5dp"
+                android:text="@string/session_tags"
+                style="@style/TextHeader" />
+            <TextView
+                android:id="@+id/session_tags"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                style="@style/TextBody" />
+        </LinearLayout>
+
+        <LinearLayout
             android:id="@+id/session_experience_block"
             android:orientation="vertical"
             android:paddingBottom="10dp"

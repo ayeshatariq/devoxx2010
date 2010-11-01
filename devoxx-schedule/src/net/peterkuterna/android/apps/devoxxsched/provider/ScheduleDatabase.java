@@ -30,6 +30,8 @@ import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Sessi
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Speakers;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.SpeakersColumns;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.SyncColumns;
+import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Tags;
+import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.TagsColumns;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Tracks;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.TracksColumns;
 import android.app.SearchManager;
@@ -58,8 +60,9 @@ public class ScheduleDatabase extends SQLiteOpenHelper {
     private static final int VER_ALTER_NOTE_ON_SESSION = 3;
     private static final int VER_RECREATE_FULLTEXT_TABLE = 4;
     private static final int VER_ADD_LABS_SESSIONS = 5;
+    private static final int VER_ADD_TAGS_TABLES = 6;
 
-    private static final int DATABASE_VERSION = VER_ADD_LABS_SESSIONS;
+    private static final int DATABASE_VERSION = VER_ADD_TAGS_TABLES;
 
     interface Tables {
         String SESSIONS = "sessions";
@@ -67,9 +70,11 @@ public class ScheduleDatabase extends SQLiteOpenHelper {
         String ROOMS = "rooms";
         String BLOCKS = "blocks";
         String TRACKS = "tracks";
+        String TAGS = "tags";
         String NOTES = "notes";
         String SYNC = "sync";
         String SESSIONS_SPEAKERS = "sessions_speakers";
+        String SESSIONS_TAGS = "sessions_tags";
 
         String SESSIONS_SEARCH = "sessions_search";
         String SPEAKERS_SEARCH = "speakers_search";
@@ -86,6 +91,15 @@ public class ScheduleDatabase extends SQLiteOpenHelper {
 
         String SESSIONS_SPEAKERS_JOIN_SESSIONS_BLOCKS_ROOMS_TRACKS = "sessions_speakers "
             + "LEFT OUTER JOIN sessions ON sessions_speakers.session_id=sessions.session_id "
+            + "LEFT OUTER JOIN blocks ON sessions.block_id=blocks.block_id "
+            + "LEFT OUTER JOIN rooms ON sessions.room_id=rooms.room_id "
+        	+ "LEFT OUTER JOIN tracks ON sessions.track_id=tracks.track_id";
+
+        String SESSIONS_TAGS_JOIN_TAGS = "sessions_tags "
+            + "LEFT OUTER JOIN tags ON sessions_tags.tag_id=tags.tag_id";
+
+        String SESSIONS_TAGS_JOIN_SESSIONS_BLOCKS_ROOMS_TRACKS = "sessions_tags "
+            + "LEFT OUTER JOIN sessions ON sessions_tags.session_id=sessions.session_id "
             + "LEFT OUTER JOIN blocks ON sessions.block_id=blocks.block_id "
             + "LEFT OUTER JOIN rooms ON sessions.room_id=rooms.room_id "
         	+ "LEFT OUTER JOIN tracks ON sessions.track_id=tracks.track_id";
@@ -119,6 +133,11 @@ public class ScheduleDatabase extends SQLiteOpenHelper {
         String SPEAKER_ID = "speaker_id";
     }
 
+    public interface SessionsTags {
+        String SESSION_ID = "session_id";
+        String TAG_ID = "tag_id";
+    }
+
     interface SessionsSearchColumns {
         String SESSION_ID = "session_id";
         String BODY = "body";
@@ -148,6 +167,7 @@ public class ScheduleDatabase extends SQLiteOpenHelper {
     private interface References {
         String SESSION_ID = "REFERENCES " + Tables.SESSIONS + "(" + Sessions.SESSION_ID + ")";
         String SPEAKER_ID = "REFERENCES " + Tables.SPEAKERS + "(" + Speakers.SPEAKER_ID + ")";
+        String TAG_ID = "REFERENCES " + Tables.TAGS + "(" + Tags.TAG_ID + ")";
         String ROOM_ID = "REFERENCES " + Tables.ROOMS + "(" + Rooms.ROOM_ID + ")";
         String BLOCK_ID = "REFERENCES " + Tables.BLOCKS + "(" + Blocks.BLOCK_ID + ")";
         String TRACK_ID = "REFERENCES " + Tables.TRACKS + "(" + Tracks.TRACK_ID + ")";
@@ -228,12 +248,25 @@ public class ScheduleDatabase extends SQLiteOpenHelper {
                 + TracksColumns.TRACK_COLOR + " INTEGER,"
                 + "UNIQUE (" + TracksColumns.TRACK_ID + ") ON CONFLICT REPLACE)");
 
+        db.execSQL("CREATE TABLE " + Tables.TAGS + " ("
+                + BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + TagsColumns.TAG_ID + " TEXT NOT NULL,"
+                + TagsColumns.TAG_NAME + " TEXT NOT NULL,"
+                + "UNIQUE (" + TagsColumns.TAG_ID + ") ON CONFLICT REPLACE)");
+        
         db.execSQL("CREATE TABLE " + Tables.SESSIONS_SPEAKERS + " ("
                 + BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + SessionsSpeakers.SESSION_ID + " TEXT NOT NULL " + References.SESSION_ID + ","
                 + SessionsSpeakers.SPEAKER_ID + " TEXT NOT NULL " + References.SPEAKER_ID + ","
                 + "UNIQUE (" + SessionsSpeakers.SESSION_ID + ","
                         + SessionsSpeakers.SPEAKER_ID + ") ON CONFLICT REPLACE)");
+
+        db.execSQL("CREATE TABLE " + Tables.SESSIONS_TAGS + " ("
+                + BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + SessionsTags.SESSION_ID + " TEXT NOT NULL " + References.SESSION_ID + ","
+                + SessionsTags.TAG_ID + " TEXT NOT NULL " + References.TAG_ID + ","
+                + "UNIQUE (" + SessionsTags.SESSION_ID + ","
+                        + SessionsTags.TAG_ID + ") ON CONFLICT REPLACE)");
 
         db.execSQL("CREATE TABLE " + Tables.NOTES + " ("
                 + BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -545,6 +578,21 @@ public class ScheduleDatabase extends SQLiteOpenHelper {
                 		+ " WHERE " + Blocks.BLOCK_TYPE + "='Talk'");
             	
                 version = VER_ADD_LABS_SESSIONS;
+            case VER_ADD_LABS_SESSIONS:
+                db.execSQL("CREATE TABLE " + Tables.TAGS + " ("
+                        + BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                        + TagsColumns.TAG_ID + " TEXT NOT NULL,"
+                        + TagsColumns.TAG_NAME + " TEXT NOT NULL,"
+                        + "UNIQUE (" + TagsColumns.TAG_ID + ") ON CONFLICT REPLACE)");
+                
+                db.execSQL("CREATE TABLE " + Tables.SESSIONS_TAGS + " ("
+                        + BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                        + SessionsTags.SESSION_ID + " TEXT NOT NULL " + References.SESSION_ID + ","
+                        + SessionsTags.TAG_ID + " TEXT NOT NULL " + References.TAG_ID + ","
+                        + "UNIQUE (" + SessionsTags.SESSION_ID + ","
+                                + SessionsTags.TAG_ID + ") ON CONFLICT REPLACE)");
+
+            	version = VER_ADD_TAGS_TABLES;
         }
 
         Log.d(TAG, "after upgrade logic, at version " + version);
