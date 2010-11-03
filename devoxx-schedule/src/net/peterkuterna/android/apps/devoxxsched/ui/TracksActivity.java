@@ -52,11 +52,16 @@ public class TracksActivity extends ListActivity implements AsyncQueryListener {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_tracks);
 
-        final String customTitle = getIntent().getStringExtra(Intent.EXTRA_TITLE);
-        ((TextView) findViewById(R.id.title_text)).setText(
-                customTitle != null ? customTitle : getTitle());
+        if (!getIntent().hasCategory(Intent.CATEGORY_TAB)) {
+            setContentView(R.layout.activity_tracks);
+
+            final String customTitle = getIntent().getStringExtra(Intent.EXTRA_TITLE);
+            ((TextView) findViewById(R.id.title_text)).setText(
+                    customTitle != null ? customTitle : getTitle());
+        } else {
+            setContentView(R.layout.activity_tracks_content);
+        }
 
         mAdapter = new TracksAdapter(this);
         setListAdapter(mAdapter);
