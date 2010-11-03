@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Map.Entry;
 
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract;
+import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.SearchSuggest;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Sessions;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Speakers;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Tags;
@@ -38,6 +39,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.app.SearchManager;
 import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
 import android.database.Cursor;
@@ -190,9 +192,6 @@ public class RemoteSessionsHandler extends JSONHandler {
 			    	final JSONArray tags = session.getJSONArray("tags");
 			    	final HashSet<String> tagIds = Sets.newHashSet();
 			    	
-			    	if (!isLocalSync()) {
-			    	}
-			    	
 			    	for (int j = 0; j < tags.length(); j++) {
 			    		JSONObject tag = tags.getJSONObject(j);
 			    		final String tagName = tag.getString("name").toLowerCase();
@@ -203,7 +202,10 @@ public class RemoteSessionsHandler extends JSONHandler {
 					            .withValue(Tags.TAG_ID, tagId)
 			            		.withValue(Tags.TAG_NAME, tagName).build());
 			    		
-			    		batch.add(ContentProviderOperation.newInsert(tagSessionsUri)
+	                    batch.add(ContentProviderOperation.newInsert(SearchSuggest.CONTENT_URI)
+	                            .withValue(SearchManager.SUGGEST_COLUMN_TEXT_1, tagName).build());
+
+	                    batch.add(ContentProviderOperation.newInsert(tagSessionsUri)
 			    				.withValue(SessionsTags.TAG_ID, tagId)
 			    				.withValue(SessionsTags.SESSION_ID, sessionId).build());
 			    	}

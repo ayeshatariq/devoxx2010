@@ -62,8 +62,9 @@ public class ScheduleDatabase extends SQLiteOpenHelper {
     private static final int VER_ADD_LABS_SESSIONS = 5;
     private static final int VER_ADD_TAGS_TABLES = 6;
     private static final int VER_ADD_SESSION_TAGS_INDEX = 7;
+    private static final int VER_ALTER_SEARCH_SUGGEST_TABLE = 8;
 
-    private static final int DATABASE_VERSION = VER_ADD_SESSION_TAGS_INDEX;
+    private static final int DATABASE_VERSION = VER_ALTER_SEARCH_SUGGEST_TABLE;
 
     interface Tables {
         String SESSIONS = "sessions";
@@ -290,7 +291,8 @@ public class ScheduleDatabase extends SQLiteOpenHelper {
 
         db.execSQL("CREATE TABLE " + Tables.SEARCH_SUGGEST + " ("
                 + BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-                + SearchManager.SUGGEST_COLUMN_TEXT_1 + " TEXT NOT NULL)");
+                + SearchManager.SUGGEST_COLUMN_TEXT_1 + " TEXT NOT NULL,"
+        		+ "UNIQUE (" + SearchManager.SUGGEST_COLUMN_TEXT_1 + ") ON CONFLICT REPLACE)");
     }
 
     private static void createSessionsSearch(SQLiteDatabase db, boolean createTriggers) {
@@ -602,6 +604,24 @@ public class ScheduleDatabase extends SQLiteOpenHelper {
                 		+ Tables.SESSIONS_TAGS + "(" + SessionsTags.TAG_ID + ")");
 
             	version = VER_ADD_SESSION_TAGS_INDEX;
+            case VER_ADD_SESSION_TAGS_INDEX:
+            	db.execSQL("ALTER TABLE " + Tables.SEARCH_SUGGEST + " RENAME TO tmp_"
+            			+ Tables.SEARCH_SUGGEST);
+            	
+                db.execSQL("CREATE TABLE " + Tables.SEARCH_SUGGEST + " ("
+                        + BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                        + SearchManager.SUGGEST_COLUMN_TEXT_1 + " TEXT NOT NULL,"
+                		+ "UNIQUE (" + SearchManager.SUGGEST_COLUMN_TEXT_1 + ") ON CONFLICT REPLACE)");
+
+                db.execSQL("INSERT INTO " + Tables.SEARCH_SUGGEST + "("
+                        + SearchManager.SUGGEST_COLUMN_TEXT_1 + ")"
+                        + " SELECT "
+                        + SearchManager.SUGGEST_COLUMN_TEXT_1
+                        + " FROM tmp_" + Tables.SEARCH_SUGGEST);
+                
+                db.execSQL("DROP TABLE tmp_" + Tables.SEARCH_SUGGEST);
+
+                version = VER_ALTER_SEARCH_SUGGEST_TABLE;
         }
 
         Log.d(TAG, "after upgrade logic, at version " + version);
