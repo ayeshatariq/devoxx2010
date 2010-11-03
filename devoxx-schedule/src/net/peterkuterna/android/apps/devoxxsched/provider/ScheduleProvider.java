@@ -86,6 +86,7 @@ public class ScheduleProvider extends ContentProvider {
     private static final int SESSIONS_ID_SPEAKERS_ID = 110;
     private static final int SESSIONS_ID_NOTES = 111;
     private static final int SESSIONS_ID_TAGS = 112;
+    private static final int SESSIONS_ID_TAGS_ID = 113;
 
     private static final int SPEAKERS = 200;
     private static final int SPEAKERS_STARRED = 201;
@@ -143,6 +144,7 @@ public class ScheduleProvider extends ContentProvider {
         matcher.addURI(authority, "sessions/*/speakers/*", SESSIONS_ID_SPEAKERS_ID);
         matcher.addURI(authority, "sessions/*/notes", SESSIONS_ID_NOTES);
         matcher.addURI(authority, "sessions/*/tags", SESSIONS_ID_TAGS);
+        matcher.addURI(authority, "sessions/*/tags/*", SESSIONS_ID_TAGS_ID);
 
         matcher.addURI(authority, "speakers", SPEAKERS);
         matcher.addURI(authority, "speakers/starred", SPEAKERS_STARRED);
@@ -467,6 +469,13 @@ public class ScheduleProvider extends ContentProvider {
                 final String sessionId = Sessions.getSessionId(uri);
                 return builder.table(Tables.SESSIONS_TAGS)
                         .where(SessionsTags.SESSION_ID + "=?", sessionId);
+            }
+            case SESSIONS_ID_TAGS_ID: {
+                final String sessionId = Sessions.getSessionId(uri);
+                final String tagId = Sessions.getTagId(uri);
+                return builder.table(Tables.SESSIONS_TAGS)
+                        .where(SessionsTags.SESSION_ID + "=?", sessionId)
+                        .where(SessionsTags.TAG_ID + "=?", tagId);
             }
             case SPEAKERS: {
                 return builder.table(Tables.SPEAKERS);

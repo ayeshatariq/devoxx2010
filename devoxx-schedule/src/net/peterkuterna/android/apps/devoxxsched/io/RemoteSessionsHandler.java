@@ -83,6 +83,7 @@ public class RemoteSessionsHandler extends JSONHandler {
 		final HashSet<String> sessionIds = Sets.newHashSet();
 		final HashSet<String> trackIds = Sets.newHashSet();
 		final HashMap<String, HashSet<String>> sessionSpeakerIds = Maps.newHashMap();
+		final HashMap<String, HashSet<String>> sessionTagIds = Maps.newHashMap();
 		
 		int nrEntries = 0;
 		for (JSONArray sessions : entries) {
@@ -206,6 +207,8 @@ public class RemoteSessionsHandler extends JSONHandler {
 			    				.withValue(SessionsTags.TAG_ID, tagId)
 			    				.withValue(SessionsTags.SESSION_ID, sessionId).build());
 			    	}
+
+			    	sessionTagIds.put(sessionId, tagIds);
 			    }
 	        }
 		}
@@ -222,7 +225,17 @@ public class RemoteSessionsHandler extends JSONHandler {
             	}
         	}
 
-        	HashSet<String> lostSessionIds = getLostIds(sessionIds, Sessions.CONTENT_URI, SessionsQuery.PROJECTION, SessionsQuery.SESSION_ID, resolver);
+        	for (Entry<String, HashSet<String>> entry : sessionTagIds.entrySet()) {
+        		String sessionId = entry.getKey();
+        		HashSet<String> tagIds = entry.getValue();
+			    final Uri tagSessionsUri = Sessions.buildTagsDirUri(sessionId);
+    	    	HashSet<String> lostTagIds = getLostIds(tagIds, tagSessionsUri, TagsQuery.PROJECTION, TagsQuery.TAG_ID, resolver);
+            	for (String lostTagId : lostTagIds) {
+	        		final Uri deleteUri = Sessions.buildSessionTagUri(sessionId, lostTagId);
+			    	batch.add(ContentProviderOperation.newDelete(deleteUri).build());
+            	}
+        	}
+
         	HashSet<String> lostTrackIds = getLostIds(trackIds, Tracks.CONTENT_URI, TracksQuery.PROJECTION, TracksQuery.TRACK_ID, resolver);
         	for (String lostTrackId : lostTrackIds) {
         		Uri deleteUri = Tracks.buildSessionsUri(lostTrackId);
@@ -230,8 +243,11 @@ public class RemoteSessionsHandler extends JSONHandler {
 		    	deleteUri = Tracks.buildTrackUri(lostTrackId);
 		    	batch.add(ContentProviderOperation.newDelete(deleteUri).build());
         	}
+        	HashSet<String> lostSessionIds = getLostIds(sessionIds, Sessions.CONTENT_URI, SessionsQuery.PROJECTION, SessionsQuery.SESSION_ID, resolver);
         	for (String lostSessionId : lostSessionIds) {
 		    	Uri deleteUri = Sessions.buildSpeakersDirUri(lostSessionId);
+		    	batch.add(ContentProviderOperation.newDelete(deleteUri).build());
+		    	deleteUri = Sessions.buildTagsDirUri(lostSessionId);
 		    	batch.add(ContentProviderOperation.newDelete(deleteUri).build());
 		    	deleteUri = Sessions.buildSessionUri(lostSessionId);
 		    	batch.add(ContentProviderOperation.newDelete(deleteUri).build());
@@ -333,6 +349,14 @@ public class RemoteSessionsHandler extends JSONHandler {
         };
 
         int SPEAKER_ID = 0;
+    }
+
+    private interface TagsQuery {
+        String[] PROJECTION = {
+        		Tags.TAG_ID,
+        };
+
+        int TAG_ID = 0;
     }
 
     private interface TracksQuery {

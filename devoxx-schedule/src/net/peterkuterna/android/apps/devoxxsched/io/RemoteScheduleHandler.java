@@ -142,6 +142,8 @@ public class RemoteScheduleHandler extends JSONHandler {
 		    for (String lostId : getLostIds(sessionUpdateBatchMap.keySet(), Sessions.CONTENT_URI, SessionsQuery.PROJECTION, SessionsQuery.SESSION_ID, resolver)) {
 		    	Uri deleteUri = Sessions.buildSpeakersDirUri(lostId);
 		    	batch.add(ContentProviderOperation.newDelete(deleteUri).build());
+		    	deleteUri = Sessions.buildTagsDirUri(lostId);
+		    	batch.add(ContentProviderOperation.newDelete(deleteUri).build());
 		    	deleteUri = Sessions.buildSessionUri(lostId);
 		    	batch.add(ContentProviderOperation.newDelete(deleteUri).build());
 		    }

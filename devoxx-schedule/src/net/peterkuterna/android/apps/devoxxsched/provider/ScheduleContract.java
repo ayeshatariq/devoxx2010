@@ -400,6 +400,11 @@ public class ScheduleContract {
             return CONTENT_URI.buildUpon().appendPath(sessionId).appendPath(PATH_SPEAKERS).appendPath(speakerId).build();
         }
 
+        /** Build {@link Uri} for requested {@link #SESSION_ID} for given {@link Tags} with given {@link #TAG_ID} */
+        public static Uri buildSessionTagUri(String sessionId, String tagId) {
+            return CONTENT_URI.buildUpon().appendPath(sessionId).appendPath(PATH_TAGS).appendPath(tagId).build();
+        }
+
         /**
          * Build {@link Uri} that references any {@link Notes} associated with
          * the requested {@link #SESSION_ID}.
@@ -431,6 +436,10 @@ public class ScheduleContract {
         }
 
         public static String getSpeakerId(Uri uri) {
+            return uri.getPathSegments().get(3);
+        }
+
+        public static String getTagId(Uri uri) {
             return uri.getPathSegments().get(3);
         }
 
