@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2010 Peter Kuterna
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,17 @@
  * limitations under the License.
  */
 
-/*
- * Modified by Peter Kuterna to support the Devoxx conference.
- */
 package net.peterkuterna.android.apps.devoxxsched.ui;
 
 import net.peterkuterna.android.apps.devoxxsched.R;
-import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Tracks;
+import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Tags;
 import net.peterkuterna.android.apps.devoxxsched.util.NotifyingAsyncQueryHandler;
-import net.peterkuterna.android.apps.devoxxsched.util.UIUtils;
 import net.peterkuterna.android.apps.devoxxsched.util.NotifyingAsyncQueryHandler.AsyncQueryListener;
+import net.peterkuterna.android.apps.devoxxsched.util.UIUtils;
 import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.PorterDuff;
-import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.BaseColumns;
@@ -40,12 +35,11 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 /**
- * {@link ListActivity} that displays a set of {@link Tracks}, as requested
- * through {@link Intent#getData()}.
+ * {@link ListActivity} that displays a set of {@link Tags}
  */
-public class TracksActivity extends ListActivity implements AsyncQueryListener {
+public class TagsActivity extends ListActivity implements AsyncQueryListener {
 
-    private TracksAdapter mAdapter;
+    private TagsAdapter mAdapter;
 
     private NotifyingAsyncQueryHandler mHandler;
 
@@ -54,24 +48,24 @@ public class TracksActivity extends ListActivity implements AsyncQueryListener {
         super.onCreate(savedInstanceState);
 
         if (!getIntent().hasCategory(Intent.CATEGORY_TAB)) {
-            setContentView(R.layout.activity_tracks);
+            setContentView(R.layout.activity_tags);
 
             final String customTitle = getIntent().getStringExtra(Intent.EXTRA_TITLE);
             ((TextView) findViewById(R.id.title_text)).setText(
                     customTitle != null ? customTitle : getTitle());
         } else {
-            setContentView(R.layout.activity_tracks_content);
+            setContentView(R.layout.activity_tags_content);
         }
 
-        mAdapter = new TracksAdapter(this);
+        mAdapter = new TagsAdapter(this);
         setListAdapter(mAdapter);
 
         final Intent intent = getIntent();
-        final Uri tracksUri = intent.getData();
+        final Uri tagsUri = intent.getData();
 
-        // Start background query to load tracks
+        // Start background query to load tags
         mHandler = new NotifyingAsyncQueryHandler(getContentResolver(), this);
-        mHandler.startQuery(tracksUri, TracksQuery.PROJECTION_WITH_SESSIONS_COUNT, Tracks.SESSIONS_COUNT + ">0", null, Tracks.DEFAULT_SORT);
+        mHandler.startQuery(tagsUri, TagsQuery.PROJECTION_WITH_SESSIONS_COUNT, Tags.SESSIONS_COUNT + ">0", null, Tags.DEFAULT_SORT);
     }
 
     /** {@inheritDoc} */
@@ -93,59 +87,53 @@ public class TracksActivity extends ListActivity implements AsyncQueryListener {
     /** {@inheritDoc} */
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
-        // Launch viewer for specific track
+        // Launch viewer for specific tag
         final Cursor cursor = (Cursor) mAdapter.getItem(position);
-        final String trackId = cursor.getString(TracksQuery.TRACK_ID);
-        final String trackTitle = cursor.getString(TracksQuery.TRACK_NAME);
-        final int trackColor = cursor.getInt(TracksQuery.TRACK_COLOR);
-        final Uri sessionUri = Tracks.buildSessionsUri(trackId);
+        final String tagId = cursor.getString(TagsQuery.TAG_ID);
+        final String tagName = cursor.getString(TagsQuery.TAG_NAME);
+        final String tagTitle = "Sessions for '" + tagName + "'";
+        final Uri sessionUri = Tags.buildSessionsDirUri(tagId);
         final Intent intent = new Intent(Intent.ACTION_VIEW, sessionUri);
-        intent.putExtra(Intent.EXTRA_TITLE, trackTitle);
-        intent.putExtra(SessionsActivity.EXTRA_TRACK_COLOR, trackColor);
+        intent.putExtra(Intent.EXTRA_TITLE, tagTitle);
         startActivity(intent);
     }
 
     /**
-     * {@link CursorAdapter} that renders a {@link TracksQuery}.
+     * {@link CursorAdapter} that renders a {@link TagsQuery}.
      */
-    private class TracksAdapter extends CursorAdapter {
-        public TracksAdapter(Context context) {
+    private class TagsAdapter extends CursorAdapter {
+        public TagsAdapter(Context context) {
             super(context, null);
         }
 
         /** {@inheritDoc} */
         @Override
         public View newView(Context context, Cursor cursor, ViewGroup parent) {
-            return getLayoutInflater().inflate(R.layout.list_item_track, parent, false);
+            return getLayoutInflater().inflate(R.layout.list_item_tag, parent, false);
         }
 
         /** {@inheritDoc} */
         @Override
         public void bindView(View view, Context context, Cursor cursor) {
-            final TextView textView = (TextView) view.findViewById(android.R.id.text1);
-            textView.setText(cursor.getString(TracksQuery.TRACK_NAME));
-
-            // Assign track color to visible block
-            final View iconView = view.findViewById(android.R.id.icon1);
-            LayerDrawable iconDrawable = (LayerDrawable) iconView.getBackground();
-            iconDrawable.getDrawable(0).setColorFilter(
-                    cursor.getInt(TracksQuery.TRACK_COLOR), PorterDuff.Mode.SRC_ATOP);
+            final TextView tagView = (TextView) view.findViewById(android.R.id.text1);
+            tagView.setText(cursor.getString(TagsQuery.TAG_NAME));
+            final TextView tagCountView = (TextView) view.findViewById(android.R.id.text2);
+            tagCountView.setText(cursor.getString(TagsQuery.SESSION_COUNT));
         }
     }
 
-    /** {@link Tracks} query parameters. */
-    private interface TracksQuery {
+    /** {@link Tags} query parameters. */
+    private interface TagsQuery {
         String[] PROJECTION_WITH_SESSIONS_COUNT = {
                 BaseColumns._ID,
-                Tracks.TRACK_ID,
-                Tracks.TRACK_NAME,
-                Tracks.TRACK_COLOR,
-                Tracks.SESSIONS_COUNT,
+                Tags.TAG_ID,
+                Tags.TAG_NAME,
+                Tags.SESSIONS_COUNT,
         };
 
         int _ID = 0;
-        int TRACK_ID = 1;
-        int TRACK_NAME = 2;
-        int TRACK_COLOR = 3;
+        int TAG_ID = 1;
+        int TAG_NAME = 2;
+        int SESSION_COUNT = 3;
     }
 }

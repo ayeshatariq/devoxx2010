@@ -44,6 +44,7 @@
     <string name="title_map">Map</string>
     <string name="title_starred">Starred</string>
     <string name="title_tracks">Tracks</string>
+    <string name="title_tags">Tags</string>
     <string name="title_new_sessions">New sessions</string>
     <string name="title_changed_starred_sessions">Changed starred sessions</string>
     <string name="title_myschedule">MySchedule registration</string>
@@ -98,8 +99,13 @@
     <string name="session_type">Type</string>
     <string name="session_note">Note</string>
     <string name="session_speakers">Speakers</string>
+    <string name="session_tags">Tags</string>
 
     <string name="session_subtitle"><xliff:g id="time">%1$s</xliff:g> in <xliff:g id="room">%2$s</xliff:g></string>
+
+    <string name="sessions_track">By track</string>
+    <string name="sessions_tag">By tag</string>
+    <string name="sessions_all">All</string>
 
     <string name="starred_sessions">Sessions</string>
     <string name="starred_speakers">Speakers</string>

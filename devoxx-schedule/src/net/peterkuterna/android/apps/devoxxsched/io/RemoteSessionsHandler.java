@@ -24,10 +24,13 @@ import java.util.HashSet;
 import java.util.Map.Entry;
 
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract;
+import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.SearchSuggest;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Sessions;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Speakers;
+import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Tags;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Tracks;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleDatabase.SessionsSpeakers;
+import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleDatabase.SessionsTags;
 import net.peterkuterna.android.apps.devoxxsched.util.Lists;
 import net.peterkuterna.android.apps.devoxxsched.util.Maps;
 import net.peterkuterna.android.apps.devoxxsched.util.Sets;
@@ -36,6 +39,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.app.SearchManager;
 import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
 import android.database.Cursor;
@@ -81,6 +85,7 @@ public class RemoteSessionsHandler extends JSONHandler {
 		final HashSet<String> sessionIds = Sets.newHashSet();
 		final HashSet<String> trackIds = Sets.newHashSet();
 		final HashMap<String, HashSet<String>> sessionSpeakerIds = Maps.newHashMap();
+		final HashMap<String, HashSet<String>> sessionTagIds = Maps.newHashMap();
 		
 		int nrEntries = 0;
 		for (JSONArray sessions : entries) {
@@ -181,6 +186,32 @@ public class RemoteSessionsHandler extends JSONHandler {
 			    	
 			    	sessionSpeakerIds.put(sessionId, speakerIds);
 			    }
+			    
+			    if (session.has("tags")) {
+				    final Uri tagSessionsUri = Sessions.buildTagsDirUri(sessionId);
+			    	final JSONArray tags = session.getJSONArray("tags");
+			    	final HashSet<String> tagIds = Sets.newHashSet();
+			    	
+			    	for (int j = 0; j < tags.length(); j++) {
+			    		JSONObject tag = tags.getJSONObject(j);
+			    		final String tagName = tag.getString("name").toLowerCase();
+			    		final String tagId = Tags.generateTagId(tagName);
+			    		tagIds.add(tagId);
+			    		
+			            batch.add(ContentProviderOperation.newInsert(Tags.CONTENT_URI)
+					            .withValue(Tags.TAG_ID, tagId)
+			            		.withValue(Tags.TAG_NAME, tagName).build());
+			    		
+	                    batch.add(ContentProviderOperation.newInsert(SearchSuggest.CONTENT_URI)
+	                            .withValue(SearchManager.SUGGEST_COLUMN_TEXT_1, tagName).build());
+
+	                    batch.add(ContentProviderOperation.newInsert(tagSessionsUri)
+			    				.withValue(SessionsTags.TAG_ID, tagId)
+			    				.withValue(SessionsTags.SESSION_ID, sessionId).build());
+			    	}
+
+			    	sessionTagIds.put(sessionId, tagIds);
+			    }
 	        }
 		}
         
@@ -196,7 +227,17 @@ public class RemoteSessionsHandler extends JSONHandler {
             	}
         	}
 
-        	HashSet<String> lostSessionIds = getLostIds(sessionIds, Sessions.CONTENT_URI, SessionsQuery.PROJECTION, SessionsQuery.SESSION_ID, resolver);
+        	for (Entry<String, HashSet<String>> entry : sessionTagIds.entrySet()) {
+        		String sessionId = entry.getKey();
+        		HashSet<String> tagIds = entry.getValue();
+			    final Uri tagSessionsUri = Sessions.buildTagsDirUri(sessionId);
+    	    	HashSet<String> lostTagIds = getLostIds(tagIds, tagSessionsUri, TagsQuery.PROJECTION, TagsQuery.TAG_ID, resolver);
+            	for (String lostTagId : lostTagIds) {
+	        		final Uri deleteUri = Sessions.buildSessionTagUri(sessionId, lostTagId);
+			    	batch.add(ContentProviderOperation.newDelete(deleteUri).build());
+            	}
+        	}
+
         	HashSet<String> lostTrackIds = getLostIds(trackIds, Tracks.CONTENT_URI, TracksQuery.PROJECTION, TracksQuery.TRACK_ID, resolver);
         	for (String lostTrackId : lostTrackIds) {
         		Uri deleteUri = Tracks.buildSessionsUri(lostTrackId);
@@ -204,8 +245,11 @@ public class RemoteSessionsHandler extends JSONHandler {
 		    	deleteUri = Tracks.buildTrackUri(lostTrackId);
 		    	batch.add(ContentProviderOperation.newDelete(deleteUri).build());
         	}
+        	HashSet<String> lostSessionIds = getLostIds(sessionIds, Sessions.CONTENT_URI, SessionsQuery.PROJECTION, SessionsQuery.SESSION_ID, resolver);
         	for (String lostSessionId : lostSessionIds) {
 		    	Uri deleteUri = Sessions.buildSpeakersDirUri(lostSessionId);
+		    	batch.add(ContentProviderOperation.newDelete(deleteUri).build());
+		    	deleteUri = Sessions.buildTagsDirUri(lostSessionId);
 		    	batch.add(ContentProviderOperation.newDelete(deleteUri).build());
 		    	deleteUri = Sessions.buildSessionUri(lostSessionId);
 		    	batch.add(ContentProviderOperation.newDelete(deleteUri).build());
@@ -307,6 +351,14 @@ public class RemoteSessionsHandler extends JSONHandler {
         };
 
         int SPEAKER_ID = 0;
+    }
+
+    private interface TagsQuery {
+        String[] PROJECTION = {
+        		Tags.TAG_ID,
+        };
+
+        int TAG_ID = 0;
     }
 
     private interface TracksQuery {

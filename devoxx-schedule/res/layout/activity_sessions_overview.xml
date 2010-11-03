@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Copyright 2010 Google Inc.
+    Copyright 2010 Peter Kuterna
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
--->
-
-<!-- 
-	Modified by Peter Kuterna for the Devoxx Conference.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
@@ -39,6 +35,29 @@
             android:onClick="onSearchClick" />
     </LinearLayout>
 
-    <include layout="@layout/activity_tracks_content" />
+    <TabHost
+        android:id="@android:id/tabhost"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_marginTop="5dip">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+            <TabWidget
+                android:id="@android:id/tabs"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:layout_marginLeft="-2dp"
+                android:layout_marginRight="-2dp" />
+            <FrameLayout
+                android:id="@android:id/tabcontent"
+                android:layout_width="fill_parent"
+                android:layout_height="0dip"
+                android:layout_weight="1">
+            </FrameLayout>
+        </LinearLayout>
+    </TabHost>
 
 </LinearLayout>

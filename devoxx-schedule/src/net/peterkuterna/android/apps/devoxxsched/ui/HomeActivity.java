@@ -29,13 +29,12 @@ import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Notes
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Rooms;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Sessions;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Speakers;
-import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Tracks;
 import net.peterkuterna.android.apps.devoxxsched.service.SyncService;
 import net.peterkuterna.android.apps.devoxxsched.util.DetachableResultReceiver;
-import net.peterkuterna.android.apps.devoxxsched.util.NotifyingAsyncQueryHandler;
-import net.peterkuterna.android.apps.devoxxsched.util.UIUtils;
 import net.peterkuterna.android.apps.devoxxsched.util.DetachableResultReceiver.Receiver;
+import net.peterkuterna.android.apps.devoxxsched.util.NotifyingAsyncQueryHandler;
 import net.peterkuterna.android.apps.devoxxsched.util.NotifyingAsyncQueryHandler.AsyncQueryListener;
+import net.peterkuterna.android.apps.devoxxsched.util.UIUtils;
 import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
@@ -168,9 +167,8 @@ public class HomeActivity extends Activity implements AsyncQueryListener, Receiv
 
     /** Handle "sessions" action. */
     public void onSessionsClick(View v) {
-        // Launch sessions clustered by track
-        final Intent intent = new Intent(Intent.ACTION_VIEW, Tracks.CONTENT_URI);
-        intent.putExtra(Intent.EXTRA_TITLE, getString(R.string.title_session_tracks));
+        // Launch sessions overview activity
+        final Intent intent = new Intent(this, SessionsOverviewActivity.class);
         startActivity(intent);
     }
 

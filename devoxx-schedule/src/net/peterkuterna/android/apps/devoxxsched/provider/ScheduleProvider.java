@@ -30,9 +30,11 @@ import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Searc
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Sessions;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Speakers;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Sync;
+import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Tags;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Tracks;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleDatabase.SessionsSearchColumns;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleDatabase.SessionsSpeakers;
+import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleDatabase.SessionsTags;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleDatabase.SpeakersSearchColumns;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleDatabase.Tables;
 import net.peterkuterna.android.apps.devoxxsched.service.SyncService;
@@ -83,6 +85,8 @@ public class ScheduleProvider extends ContentProvider {
     private static final int SESSIONS_ID_SPEAKERS = 109;
     private static final int SESSIONS_ID_SPEAKERS_ID = 110;
     private static final int SESSIONS_ID_NOTES = 111;
+    private static final int SESSIONS_ID_TAGS = 112;
+    private static final int SESSIONS_ID_TAGS_ID = 113;
 
     private static final int SPEAKERS = 200;
     private static final int SPEAKERS_STARRED = 201;
@@ -113,6 +117,10 @@ public class ScheduleProvider extends ContentProvider {
 
     private static final int SEARCH_SUGGEST = 800;
 
+    private static final int TAGS = 900;
+    private static final int TAGS_ID = 901;
+    private static final int TAGS_ID_SESSIONS = 902;
+
     private static final String MIME_XML = "text/xml";
 
     /**
@@ -135,6 +143,8 @@ public class ScheduleProvider extends ContentProvider {
         matcher.addURI(authority, "sessions/*/speakers", SESSIONS_ID_SPEAKERS);
         matcher.addURI(authority, "sessions/*/speakers/*", SESSIONS_ID_SPEAKERS_ID);
         matcher.addURI(authority, "sessions/*/notes", SESSIONS_ID_NOTES);
+        matcher.addURI(authority, "sessions/*/tags", SESSIONS_ID_TAGS);
+        matcher.addURI(authority, "sessions/*/tags/*", SESSIONS_ID_TAGS_ID);
 
         matcher.addURI(authority, "speakers", SPEAKERS);
         matcher.addURI(authority, "speakers/starred", SPEAKERS_STARRED);
@@ -164,6 +174,10 @@ public class ScheduleProvider extends ContentProvider {
         matcher.addURI(authority, "sync/*", SYNC_ID);
 
         matcher.addURI(authority, "search_suggest_query", SEARCH_SUGGEST);
+
+        matcher.addURI(authority, "tags", TAGS);
+        matcher.addURI(authority, "tags/*", TAGS_ID);
+        matcher.addURI(authority, "tags/*/sessions", TAGS_ID_SESSIONS);
 
         return matcher;
     }
@@ -202,6 +216,8 @@ public class ScheduleProvider extends ContentProvider {
                 return Speakers.CONTENT_TYPE;
             case SESSIONS_ID_NOTES:
                 return Notes.CONTENT_TYPE;
+            case SESSIONS_ID_TAGS:
+                return Tags.CONTENT_TYPE;
             case SPEAKERS:
                 return Speakers.CONTENT_TYPE;
             case SPEAKERS_STARRED:
@@ -243,6 +259,12 @@ public class ScheduleProvider extends ContentProvider {
             case SYNC_ID:
                 return Sync.CONTENT_ITEM_TYPE;
             case TRACKS_ID_SESSIONS:
+                return Sessions.CONTENT_TYPE;
+            case TAGS:
+                return Tags.CONTENT_TYPE;
+            case TAGS_ID:
+                return Tags.CONTENT_ITEM_TYPE;
+            case TAGS_ID_SESSIONS:
                 return Sessions.CONTENT_TYPE;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
@@ -310,6 +332,10 @@ public class ScheduleProvider extends ContentProvider {
                 final long noteId = db.insertOrThrow(Tables.NOTES, null, values);
                 return ContentUris.withAppendedId(Notes.CONTENT_URI, noteId);
             }
+            case SESSIONS_ID_TAGS: {
+                db.insertOrThrow(Tables.SESSIONS_TAGS, null, values);
+                return Tags.buildTagUri(values.getAsString(SessionsTags.TAG_ID));
+            }
             case SPEAKERS: {
                 db.insertOrThrow(Tables.SPEAKERS, null, values);
                 return Speakers.buildSpeakerUri(values.getAsString(Speakers.SPEAKER_ID));
@@ -341,6 +367,14 @@ public class ScheduleProvider extends ContentProvider {
             case SEARCH_SUGGEST: {
                 db.insertOrThrow(Tables.SEARCH_SUGGEST, null, values);
                 return SearchSuggest.CONTENT_URI;
+            }
+            case TAGS: {
+                db.insertOrThrow(Tables.TAGS, null, values);
+                return Tags.buildTagUri(values.getAsString(Tags.TAG_ID));
+            }
+            case TAGS_ID_SESSIONS: {
+                db.insertOrThrow(Tables.SESSIONS_TAGS, null, values);
+                return Sessions.buildSessionUri(values.getAsString(SessionsTags.SESSION_ID));
             }
             default: {
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
@@ -431,6 +465,18 @@ public class ScheduleProvider extends ContentProvider {
                         .where(SessionsSpeakers.SESSION_ID + "=?", sessionId)
                         .where(SessionsSpeakers.SPEAKER_ID + "=?", speakerId);
             }
+            case SESSIONS_ID_TAGS: {
+                final String sessionId = Sessions.getSessionId(uri);
+                return builder.table(Tables.SESSIONS_TAGS)
+                        .where(SessionsTags.SESSION_ID + "=?", sessionId);
+            }
+            case SESSIONS_ID_TAGS_ID: {
+                final String sessionId = Sessions.getSessionId(uri);
+                final String tagId = Sessions.getTagId(uri);
+                return builder.table(Tables.SESSIONS_TAGS)
+                        .where(SessionsTags.SESSION_ID + "=?", sessionId)
+                        .where(SessionsTags.TAG_ID + "=?", tagId);
+            }
             case SPEAKERS: {
                 return builder.table(Tables.SPEAKERS);
             }
@@ -496,6 +542,19 @@ public class ScheduleProvider extends ContentProvider {
             }
             case SEARCH_SUGGEST: {
                 return builder.table(Tables.SEARCH_SUGGEST);
+            }
+            case TAGS: {
+                return builder.table(Tables.TAGS);
+            }
+            case TAGS_ID: {
+                final String tagId = Tags.getTagId(uri);
+                return builder.table(Tables.TAGS)
+                        .where(Tags.TAG_ID + "=?", tagId);
+            }
+            case TAGS_ID_SESSIONS: {
+                final String tagId = Tags.getTagId(uri);
+                return builder.table(Tables.SESSIONS_TAGS)
+                        .where(Tags.TAG_ID + "=?", tagId);
             }
             default: {
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
@@ -625,6 +684,13 @@ public class ScheduleProvider extends ContentProvider {
 		        		.mapToTable(Notes.SESSION_ID, Tables.NOTES)
                 		.mapToTable(Tracks.TRACK_COLOR, Tables.TRACKS)
                         .where(Qualified.NOTES_SESSION_ID + "=?", sessionId);
+            }
+            case SESSIONS_ID_TAGS: {
+                final String sessionId = Sessions.getSessionId(uri);
+                return builder.table(Tables.SESSIONS_TAGS_JOIN_TAGS)
+                        .mapToTable(Tags._ID, Tables.TAGS)
+                        .mapToTable(Tags.TAG_ID, Tables.TAGS)
+                        .where(Qualified.SESSIONS_TAGS_SESSION_ID + "=?", sessionId);
             }
             case SPEAKERS: {
                 return builder.table(Tables.SPEAKERS)
@@ -760,6 +826,27 @@ public class ScheduleProvider extends ContentProvider {
                 		.mapToTable(Tracks.TRACK_COLOR, Tables.TRACKS)
                         .where(Qualified.SESSIONS_TRACK_ID + "=?", trackId);
             }
+            case TAGS: {
+                return builder.table(Tables.TAGS)
+                		.map(Tags.SESSIONS_COUNT, Subquery.TAG_SESSIONS_COUNT);
+            }
+            case TAGS_ID: {
+                final String tagId = Tags.getTagId(uri);
+                return builder.table(Tables.TAGS)
+                        .where(Tags.TAG_ID + "=?", tagId);
+            }
+            case TAGS_ID_SESSIONS: {
+                final String tagId = Tags.getTagId(uri);
+                return builder.table(Tables.SESSIONS_TAGS_JOIN_SESSIONS_BLOCKS_ROOMS_TRACKS)
+                        .mapToTable(Sessions._ID, Tables.SESSIONS)
+                        .mapToTable(Sessions.SESSION_ID, Tables.SESSIONS)
+                        .mapToTable(Sessions.BLOCK_ID, Tables.SESSIONS)
+                        .mapToTable(Sessions.ROOM_ID, Tables.SESSIONS)
+                        .mapToTable(Sessions.TRACK_ID, Tables.SESSIONS)
+                        .map(Sessions.STARRED_IN_BLOCK_COUNT, Subquery.BLOCK_STARRED_SESSIONS_COUNT)
+                        .mapToTable(Tracks.TRACK_COLOR, Tables.TRACKS)
+                        .where(Qualified.SESSIONS_TAGS_TAG_ID + "=?", tagId);
+            }
             default: {
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
             }
@@ -813,6 +900,10 @@ public class ScheduleProvider extends ContentProvider {
                 + ") FROM " + Tables.SESSIONS + " WHERE "
                 + Qualified.SESSIONS_TRACK_ID + "=" + Qualified.TRACKS_TRACK_ID + ")";
         
+        String TAG_SESSIONS_COUNT = "(SELECT COUNT(" + Qualified.SESSIONS_TAGS_TAG_ID
+        + ") FROM " + Tables.SESSIONS_TAGS + " WHERE "
+        + Qualified.SESSIONS_TAGS_TAG_ID + "=" + Qualified.TAGS_TAG_ID + ")";
+
         String SESSIONS_SNIPPET = "snippet(" + Tables.SESSIONS_SEARCH + ",'{','}','\u2026')";
         String SPEAKERS_SNIPPET = "snippet(" + Tables.SPEAKERS_SEARCH + ",'{','}','\u2026')";
     }
@@ -849,9 +940,16 @@ public class ScheduleProvider extends ContentProvider {
         String SESSIONS_SPEAKERS_SPEAKER_ID = Tables.SESSIONS_SPEAKERS + "."
                 + SessionsSpeakers.SPEAKER_ID;
 
+        String SESSIONS_TAGS_SESSION_ID = Tables.SESSIONS_TAGS + "."
+        		+ SessionsTags.SESSION_ID;
+        String SESSIONS_TAGS_TAG_ID = Tables.SESSIONS_TAGS + "."
+        		+ SessionsTags.TAG_ID;
+
         String SESSIONS_STARRED = Tables.SESSIONS + "." + Sessions.STARRED;
 
         String TRACKS_TRACK_ID = Tables.TRACKS + "." + Tracks.TRACK_ID;
+
+        String TAGS_TAG_ID = Tables.TAGS + "." + Tags.TAG_ID;
 
         String BLOCKS_BLOCK_ID = Tables.BLOCKS + "." + Blocks.BLOCK_ID;
         String BLOCKS_BLOCK_START = Tables.BLOCKS + "." + Blocks.BLOCK_START;

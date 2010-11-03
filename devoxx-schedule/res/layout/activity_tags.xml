@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Copyright 2010 Google Inc.
+    Copyright 2010 Peter Kuterna
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,9 +15,6 @@
     limitations under the License.
 -->
 
-<!-- 
-	Modified by Peter Kuterna for the Devoxx Conference.
--->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="fill_parent"
@@ -39,6 +36,6 @@
             android:onClick="onSearchClick" />
     </LinearLayout>
 
-    <include layout="@layout/activity_tracks_content" />
+    <include layout="@layout/activity_tags_content" />
 
 </LinearLayout>
