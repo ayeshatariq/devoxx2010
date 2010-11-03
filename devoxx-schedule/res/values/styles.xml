@@ -183,4 +183,17 @@
         <item name="android:textColor">@color/title_text_alt</item>
     </style>
 
+    <style name="tagCount"> 
+        <item name="android:ellipsize">end</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:textAppearance">?android:attr/textAppearanceMedium</item>
+        <item name="android:paddingLeft">3dip</item>
+        <item name="android:paddingRight">3dip</item>
+        <item name="android:paddingTop">0dip</item>
+        <item name="android:paddingBottom">1dip</item>
+        <item name="android:minWidth">20dip</item>
+        <item name="android:maxWidth">48dip</item>
+        <item name="android:gravity">center_horizontal|center_vertical</item>
+    </style> 
+    
 </resources>

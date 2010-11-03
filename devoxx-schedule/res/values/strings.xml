@@ -44,6 +44,7 @@
     <string name="title_map">Map</string>
     <string name="title_starred">Starred</string>
     <string name="title_tracks">Tracks</string>
+    <string name="title_tags">Tags</string>
     <string name="title_new_sessions">New sessions</string>
     <string name="title_changed_starred_sessions">Changed starred sessions</string>
     <string name="title_myschedule">MySchedule registration</string>

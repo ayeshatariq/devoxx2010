@@ -827,7 +827,8 @@ public class ScheduleProvider extends ContentProvider {
                         .where(Qualified.SESSIONS_TRACK_ID + "=?", trackId);
             }
             case TAGS: {
-                return builder.table(Tables.TAGS);
+                return builder.table(Tables.TAGS)
+                		.map(Tags.SESSIONS_COUNT, Subquery.TAG_SESSIONS_COUNT);
             }
             case TAGS_ID: {
                 final String tagId = Tags.getTagId(uri);
@@ -899,6 +900,10 @@ public class ScheduleProvider extends ContentProvider {
                 + ") FROM " + Tables.SESSIONS + " WHERE "
                 + Qualified.SESSIONS_TRACK_ID + "=" + Qualified.TRACKS_TRACK_ID + ")";
         
+        String TAG_SESSIONS_COUNT = "(SELECT COUNT(" + Qualified.SESSIONS_TAGS_TAG_ID
+        + ") FROM " + Tables.SESSIONS_TAGS + " WHERE "
+        + Qualified.SESSIONS_TAGS_TAG_ID + "=" + Qualified.TAGS_TAG_ID + ")";
+
         String SESSIONS_SNIPPET = "snippet(" + Tables.SESSIONS_SEARCH + ",'{','}','\u2026')";
         String SPEAKERS_SNIPPET = "snippet(" + Tables.SPEAKERS_SEARCH + ",'{','}','\u2026')";
     }
@@ -943,6 +948,8 @@ public class ScheduleProvider extends ContentProvider {
         String SESSIONS_STARRED = Tables.SESSIONS + "." + Sessions.STARRED;
 
         String TRACKS_TRACK_ID = Tables.TRACKS + "." + Tracks.TRACK_ID;
+
+        String TAGS_TAG_ID = Tables.TAGS + "." + Tags.TAG_ID;
 
         String BLOCKS_BLOCK_ID = Tables.BLOCKS + "." + Blocks.BLOCK_ID;
         String BLOCKS_BLOCK_START = Tables.BLOCKS + "." + Blocks.BLOCK_START;

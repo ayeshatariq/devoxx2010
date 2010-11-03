@@ -61,8 +61,9 @@ public class ScheduleDatabase extends SQLiteOpenHelper {
     private static final int VER_RECREATE_FULLTEXT_TABLE = 4;
     private static final int VER_ADD_LABS_SESSIONS = 5;
     private static final int VER_ADD_TAGS_TABLES = 6;
+    private static final int VER_ADD_SESSION_TAGS_INDEX = 7;
 
-    private static final int DATABASE_VERSION = VER_ADD_TAGS_TABLES;
+    private static final int DATABASE_VERSION = VER_ADD_SESSION_TAGS_INDEX;
 
     interface Tables {
         String SESSIONS = "sessions";
@@ -267,6 +268,9 @@ public class ScheduleDatabase extends SQLiteOpenHelper {
                 + SessionsTags.TAG_ID + " TEXT NOT NULL " + References.TAG_ID + ","
                 + "UNIQUE (" + SessionsTags.SESSION_ID + ","
                         + SessionsTags.TAG_ID + ") ON CONFLICT REPLACE)");
+        
+        db.execSQL("CREATE INDEX " + SessionsTags.TAG_ID + "_IDX ON "
+        		+ Tables.SESSIONS_TAGS + "(" + SessionsTags.TAG_ID + ")");
 
         db.execSQL("CREATE TABLE " + Tables.NOTES + " ("
                 + BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -593,6 +597,11 @@ public class ScheduleDatabase extends SQLiteOpenHelper {
                                 + SessionsTags.TAG_ID + ") ON CONFLICT REPLACE)");
 
             	version = VER_ADD_TAGS_TABLES;
+            case VER_ADD_TAGS_TABLES:
+            	db.execSQL("CREATE INDEX " + SessionsTags.TAG_ID + "_IDX ON "
+                		+ Tables.SESSIONS_TAGS + "(" + SessionsTags.TAG_ID + ")");
+
+            	version = VER_ADD_SESSION_TAGS_INDEX;
         }
 
         Log.d(TAG, "after upgrade logic, at version " + version);
