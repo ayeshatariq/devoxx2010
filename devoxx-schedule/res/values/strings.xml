@@ -91,6 +91,7 @@
     <string name="empty_sessions">No sessions found</string>
     <string name="empty_session_detail">No session details found</string>
     <string name="empty_notes">No notes found</string>
+    <string name="empty_tags">No tags found</string>
 
     <string name="session_summary">Summary</string>
     <string name="session_notes">Notes</string>

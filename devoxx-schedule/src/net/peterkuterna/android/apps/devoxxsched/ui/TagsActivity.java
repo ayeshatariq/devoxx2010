@@ -30,8 +30,10 @@ import android.os.Bundle;
 import android.provider.BaseColumns;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AlphabetIndexer;
 import android.widget.CursorAdapter;
 import android.widget.ListView;
+import android.widget.SectionIndexer;
 import android.widget.TextView;
 
 /**
@@ -101,11 +103,36 @@ public class TagsActivity extends ListActivity implements AsyncQueryListener {
     /**
      * {@link CursorAdapter} that renders a {@link TagsQuery}.
      */
-    private class TagsAdapter extends CursorAdapter {
+    private class TagsAdapter extends CursorAdapter implements SectionIndexer {
+    	
+    	private AlphabetIndexer mIndexer;
+    	
         public TagsAdapter(Context context) {
             super(context, null);
         }
 
+		@Override
+		public void changeCursor(Cursor cursor) {
+			super.changeCursor(cursor);
+			
+			mIndexer = new AlphabetIndexer(cursor, TagsQuery.TAG_NAME, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+		}
+
+		@Override
+		public int getPositionForSection(int section) {
+			return mIndexer.getPositionForSection(section);
+		}
+
+		@Override
+		public int getSectionForPosition(int position) {
+			return mIndexer.getSectionForPosition(position);
+		}
+
+		@Override
+		public Object[] getSections() {
+			return mIndexer.getSections();
+		}
+          
         /** {@inheritDoc} */
         @Override
         public View newView(Context context, Cursor cursor, ViewGroup parent) {

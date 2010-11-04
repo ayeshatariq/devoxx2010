@@ -56,7 +56,7 @@
 		</activity>
 
 		<activity android:name=".ui.SessionsOverviewActivity" 
-			android:theme="@style/Theme.DevoxxSched"
+			android:theme="@style/Theme.DevoxxSchedIndexer"
 			android:label="@string/title_sessions" />
 
 		<activity android:name=".ui.TracksActivity" 
@@ -71,7 +71,7 @@
 		</activity>
 
 		<activity android:name=".ui.TagsActivity" 
-			android:theme="@style/Theme.DevoxxSched"
+			android:theme="@style/Theme.DevoxxSchedIndexer"
 			android:label="@string/title_tags">
 			<intent-filter>
 				<action android:name="android.intent.action.VIEW" />
@@ -129,7 +129,7 @@
 		</activity>
 
 		<activity android:name=".ui.SpeakersActivity" 
-			android:theme="@style/Theme.DevoxxSchedSpeakers"
+			android:theme="@style/Theme.DevoxxSchedIndexer"
 			android:label="@string/title_speakers">
 			<intent-filter>
 				<action android:name="android.intent.action.VIEW" />
