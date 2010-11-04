@@ -82,7 +82,7 @@ public class SyncService extends IntentService {
 
     private static final int VERSION_NONE = 0;
     private static final int VERSION_LOCAL = 1;
-    private static final int VERSION_REMOTE = 4;
+    private static final int VERSION_REMOTE = 5;
 
     private LocalExecutor mLocalExecutor;
     private RemoteExecutor mRemoteExecutor;
