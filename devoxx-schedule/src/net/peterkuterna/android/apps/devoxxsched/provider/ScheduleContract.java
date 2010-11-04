@@ -427,7 +427,9 @@ public class ScheduleContract {
         }
 
         public static boolean isSearchUri(Uri uri) {
-            return uri.getPathSegments().size() > 1 && PATH_SEARCH.equals(uri.getPathSegments().get(1));
+            return uri.getPathSegments().size() > 1 
+            	&& PATH_SESSIONS.equals(uri.getPathSegments().get(0))
+            	&& PATH_SEARCH.equals(uri.getPathSegments().get(1));
         }
 
         /** Read {@link #SESSION_ID} from {@link Sessions} {@link Uri}. */
