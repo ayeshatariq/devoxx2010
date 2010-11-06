@@ -109,13 +109,15 @@ public class TagsActivity extends ListActivity implements AsyncQueryListener {
     	
         public TagsAdapter(Context context) {
             super(context, null);
+
+            mIndexer = new AlphabetIndexer(null, TagsQuery.TAG_NAME, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         }
 
 		@Override
 		public void changeCursor(Cursor cursor) {
 			super.changeCursor(cursor);
 			
-			mIndexer = new AlphabetIndexer(cursor, TagsQuery.TAG_NAME, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+			mIndexer.setCursor(cursor);
 		}
 
 		@Override

@@ -116,6 +116,8 @@ public class SpeakersActivity extends ListActivity implements AsyncQueryListener
     	
         public SpeakersAdapter(Context context) {
             super(context, null);
+
+            mIndexer = new AlphabetIndexer(null, SpeakersQuery.LAST_NAME, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         }
 
         /** {@inheritDoc} */
@@ -143,7 +145,7 @@ public class SpeakersActivity extends ListActivity implements AsyncQueryListener
 		public void changeCursor(Cursor cursor) {
 			super.changeCursor(cursor);
 			
-			mIndexer = new AlphabetIndexer(cursor, SpeakersQuery.LAST_NAME, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+			mIndexer.setCursor(cursor);
 		}
 
 		@Override
