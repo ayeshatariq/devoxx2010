@@ -63,8 +63,9 @@ public class ScheduleDatabase extends SQLiteOpenHelper {
     private static final int VER_ADD_TAGS_TABLES = 6;
     private static final int VER_ADD_SESSION_TAGS_INDEX = 7;
     private static final int VER_ALTER_SEARCH_SUGGEST_TABLE = 8;
+    private static final int VER_ADD_INDICES = 9;
 
-    private static final int DATABASE_VERSION = VER_ALTER_SEARCH_SUGGEST_TABLE;
+    private static final int DATABASE_VERSION = VER_ADD_INDICES;
 
     interface Tables {
         String SESSIONS = "sessions";
@@ -270,9 +271,6 @@ public class ScheduleDatabase extends SQLiteOpenHelper {
                 + "UNIQUE (" + SessionsTags.SESSION_ID + ","
                         + SessionsTags.TAG_ID + ") ON CONFLICT REPLACE)");
         
-        db.execSQL("CREATE INDEX " + SessionsTags.TAG_ID + "_IDX ON "
-        		+ Tables.SESSIONS_TAGS + "(" + SessionsTags.TAG_ID + ")");
-
         db.execSQL("CREATE TABLE " + Tables.NOTES + " ("
                 + BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + Notes.SESSION_ID + " TEXT NOT NULL " + References.SESSION_ID + ","
@@ -293,6 +291,8 @@ public class ScheduleDatabase extends SQLiteOpenHelper {
                 + BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + SearchManager.SUGGEST_COLUMN_TEXT_1 + " TEXT NOT NULL,"
         		+ "UNIQUE (" + SearchManager.SUGGEST_COLUMN_TEXT_1 + ") ON CONFLICT REPLACE)");
+        
+        createIndices(db);
     }
 
     private static void createSessionsSearch(SQLiteDatabase db, boolean createTriggers) {
@@ -371,7 +371,63 @@ public class ScheduleDatabase extends SQLiteOpenHelper {
                 + "=old." + Speakers.SPEAKER_ID + ";" + " END;");
     }
 
-    @Override
+    private static void createIndices(SQLiteDatabase db) {
+		db.execSQL("CREATE INDEX " 
+				+ Tables.SESSIONS + "_" + Sessions.SESSION_ID + "_IDX ON "
+	    		+ Tables.SESSIONS + "(" + Sessions.SESSION_ID + ")");
+		db.execSQL("CREATE INDEX " 
+				+ Tables.SESSIONS + "_" + Sessions.BLOCK_ID + "_IDX ON "
+	    		+ Tables.SESSIONS + "(" + Sessions.BLOCK_ID + ")");
+		db.execSQL("CREATE INDEX " 
+				+ Tables.SESSIONS + "_" + Sessions.ROOM_ID + "_IDX ON "
+	    		+ Tables.SESSIONS + "(" + Sessions.ROOM_ID + ")");
+		db.execSQL("CREATE INDEX " 
+				+ Tables.SESSIONS + "_" + Sessions.TRACK_ID + "_IDX ON "
+	    		+ Tables.SESSIONS + "(" + Sessions.TRACK_ID + ")");
+		db.execSQL("CREATE INDEX " 
+				+ Tables.SESSIONS + "_" + Sessions.STARRED + "_IDX ON "
+	    		+ Tables.SESSIONS + "(" + Sessions.STARRED + ")");
+		
+		db.execSQL("CREATE INDEX " 
+				+ Tables.SPEAKERS + "_" + Speakers.SPEAKER_ID + "_IDX ON "
+	    		+ Tables.SPEAKERS + "(" + Speakers.SPEAKER_ID + ")");
+	
+		db.execSQL("CREATE INDEX " 
+				+ Tables.ROOMS + "_" + Rooms.ROOM_ID + "_IDX ON "
+	    		+ Tables.ROOMS + "(" + Rooms.ROOM_ID + ")");
+	
+		db.execSQL("CREATE INDEX " 
+				+ Tables.BLOCKS + "_" + Blocks.BLOCK_ID + "_IDX ON "
+	    		+ Tables.BLOCKS + "(" + Blocks.BLOCK_ID + ")");
+	
+		db.execSQL("CREATE INDEX " 
+				+ Tables.TRACKS + "_" + Tracks.TRACK_ID + "_IDX ON "
+	    		+ Tables.TRACKS + "(" + Tracks.TRACK_ID + ")");
+	
+		db.execSQL("CREATE INDEX " 
+				+ Tables.TAGS + "_" + Tags.TAG_ID + "_IDX ON "
+	    		+ Tables.TAGS + "(" + Tags.TAG_ID + ")");
+	
+		db.execSQL("CREATE INDEX " 
+				+ Tables.SESSIONS_SPEAKERS + "_" + SessionsSpeakers.SESSION_ID + "_IDX ON "
+	    		+ Tables.SESSIONS_SPEAKERS + "(" + SessionsSpeakers.SESSION_ID + ")");
+		db.execSQL("CREATE INDEX " 
+				+ Tables.SESSIONS_SPEAKERS + "_" + SessionsSpeakers.SPEAKER_ID + "_IDX ON "
+	    		+ Tables.SESSIONS_SPEAKERS + "(" + SessionsSpeakers.SPEAKER_ID + ")");
+	
+		db.execSQL("CREATE INDEX " 
+				+ Tables.SESSIONS_TAGS + "_" + SessionsTags.SESSION_ID + "_IDX ON "
+	    		+ Tables.SESSIONS_TAGS + "(" + SessionsTags.SESSION_ID + ")");
+		db.execSQL("CREATE INDEX " 
+				+ Tables.SESSIONS_TAGS + "_" + SessionsTags.TAG_ID + "_IDX ON "
+	    		+ Tables.SESSIONS_TAGS + "(" + SessionsTags.TAG_ID + ")");
+	
+		db.execSQL("CREATE INDEX " 
+				+ Tables.NOTES + "_" + Notes.SESSION_ID + "_IDX ON "
+	    		+ Tables.NOTES + "(" + Notes.SESSION_ID + ")");
+    }
+
+	@Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         Log.d(TAG, "onUpgrade() from " + oldVersion + " to " + newVersion);
         
@@ -622,6 +678,12 @@ public class ScheduleDatabase extends SQLiteOpenHelper {
                 db.execSQL("DROP TABLE tmp_" + Tables.SEARCH_SUGGEST);
 
                 version = VER_ALTER_SEARCH_SUGGEST_TABLE;
+            case VER_ALTER_SEARCH_SUGGEST_TABLE:
+            	db.execSQL("DROP INDEX " + SessionsTags.TAG_ID + "_IDX");
+            	
+            	createIndices(db);
+
+            	version = VER_ADD_INDICES;
         }
 
         Log.d(TAG, "after upgrade logic, at version " + version);
