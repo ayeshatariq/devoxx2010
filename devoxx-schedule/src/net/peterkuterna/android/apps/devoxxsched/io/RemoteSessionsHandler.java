@@ -33,6 +33,7 @@ import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleDatabase.Sessi
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleDatabase.SessionsTags;
 import net.peterkuterna.android.apps.devoxxsched.util.Lists;
 import net.peterkuterna.android.apps.devoxxsched.util.Maps;
+import net.peterkuterna.android.apps.devoxxsched.util.ParserUtils;
 import net.peterkuterna.android.apps.devoxxsched.util.Sets;
 
 import org.json.JSONArray;
@@ -120,13 +121,15 @@ public class RemoteSessionsHandler extends JSONHandler {
 		            }
 	            }
 	            
-	            if (newSession || sessionUpdated) {
+			    final String type = session.getString("type");
+			    if (newSession || sessionUpdated) {
 				    builder.withValue(Sessions.TITLE, session.getString("title"));
 				    builder.withValue(Sessions.EXPERIENCE, session.getString("experience"));
-				    builder.withValue(Sessions.TYPE, session.getString("type"));
+				    builder.withValue(Sessions.TYPE, type);
 				    builder.withValue(Sessions.SUMMARY, session.getString("summary"));
 				    builder.withValue(Sessions.STARRED, isStarred);
 	            }
+			    builder.withValue(Sessions.TYPE_ID, getTypeId(type));
 			    
 	        	batch.add(builder.build());
 			    
@@ -258,6 +261,18 @@ public class RemoteSessionsHandler extends JSONHandler {
         
         return batch;
 	}
+	
+	private static final String getTypeId(String type) {
+		if (type != null) {
+			String typeId = type;
+			int lastIndex = typeId.lastIndexOf(" (");
+			if (lastIndex != -1) {
+				typeId = typeId.substring(0, lastIndex);
+			}
+			return ParserUtils.sanitizeId(typeId.replaceAll(" ", "_"));
+		}
+		return null;
+	}
 
 	private static final String getTrackColor(String trackId) {
 		if (TRACK_ARCHI_SEC.equalsIgnoreCase(trackId)) {
@@ -334,6 +349,7 @@ public class RemoteSessionsHandler extends JSONHandler {
         		Sessions.SUMMARY,
         		Sessions.EXPERIENCE,
         		Sessions.TYPE,
+        		Sessions.TYPE_ID,
                 Sessions.STARRED,
         };
 

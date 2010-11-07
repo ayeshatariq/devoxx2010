@@ -165,4 +165,5 @@ public class TagsActivity extends ListActivity implements AsyncQueryListener {
         int TAG_NAME = 2;
         int SESSION_COUNT = 3;
     }
+
 }

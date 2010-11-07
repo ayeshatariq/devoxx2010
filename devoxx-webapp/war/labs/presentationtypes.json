@@ -1,0 +1,32 @@
+[
+	{
+		"id":"UNIVERSITY",
+		"name":"University",
+		"description":"University talks are on Monday and Tuesday and are in-depth session of 2 x 75 minutes."
+	},
+	{
+		"id":"CONFERENCE",
+		"name":"Conference",
+		"description":"Conference talks start on Wednesday till Friday and are our one hour technical presentations."
+	},
+	{
+		"id":"BOF",
+		"name":"BOF",
+		"description":"Informal evening sessions of 1 hour with maximum 70 people per room."
+	},
+	{
+		"id":"QUICKIE",
+		"name":"Quickie",
+		"description":"15 minute sessions during the lunch breaks."
+	},
+	{
+		"id":"TOOLS_IN_ACTION",
+		"name":"Tools in Action",
+		"description":"30 minute sessions taking place after the University talks with a focus on technical tools and APIs."
+	},
+	{
+		"id":"LABS",
+		"name":"Labs",
+		"description":"Practical hands-on sessions of 3 hours (in the BOF rooms) with maximum 50 people per room."
+	}
+]

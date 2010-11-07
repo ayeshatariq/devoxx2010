@@ -20,6 +20,7 @@ import net.peterkuterna.android.apps.devoxxsched.R;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Sessions;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Tags;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Tracks;
+import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Types;
 import net.peterkuterna.android.apps.devoxxsched.util.UIUtils;
 import android.app.TabActivity;
 import android.content.Intent;
@@ -33,6 +34,7 @@ public class SessionsOverviewActivity extends TabActivity {
 	private static final String TAG = "SessionsOverviewActivity";
 
     public static final String TAG_TRACK = "track";
+    public static final String TAG_TYPE = "type";
     public static final String TAG_TAG = "tag";
     public static final String TAG_ALL = "all";
     
@@ -44,6 +46,7 @@ public class SessionsOverviewActivity extends TabActivity {
         ((TextView) findViewById(R.id.title_text)).setText(getTitle());
         
         setupTrackTab();
+        setupTypesTab();
         setupTagTab();
         setupAllTab();
     }
@@ -65,6 +68,18 @@ public class SessionsOverviewActivity extends TabActivity {
 
         host.addTab(host.newTabSpec(TAG_TRACK)
                 .setIndicator(buildIndicator(R.string.sessions_track))
+                .setContent(intent));
+    }
+
+    /** Build and add "types" tab. */
+    private void setupTypesTab() {
+        final TabHost host = getTabHost();
+
+        final Intent intent = new Intent(Intent.ACTION_VIEW, Types.CONTENT_URI);
+        intent.addCategory(Intent.CATEGORY_TAB);
+
+        host.addTab(host.newTabSpec(TAG_TYPE)
+                .setIndicator(buildIndicator(R.string.sessions_type))
                 .setContent(intent));
     }
 

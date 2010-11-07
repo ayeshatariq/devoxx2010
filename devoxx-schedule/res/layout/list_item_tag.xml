@@ -18,9 +18,6 @@
     android:layout_width="fill_parent"
     android:layout_height="?android:attr/listPreferredItemHeight"
     android:orientation="horizontal"
-    android:paddingTop="0dip"
-    android:paddingBottom="0dip"
-    android:paddingRight="8dip"
     style="@style/ListItem">
 
     <TextView
@@ -37,6 +34,7 @@
   		android:layout_width="wrap_content"
   		android:layout_height="wrap_content"
   		android:layout_marginLeft="4dip"
+  		android:layout_marginRight="4dip"
   		android:background="@drawable/tag_count"
   		style="@style/tagCount" />
 

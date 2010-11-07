@@ -121,6 +121,15 @@ public class ScheduleContract {
     	String TAG_NAME = "tag_name";
     }
 
+    interface TypesColumns {
+    	/** Unique string identifying this type. */
+    	String TYPE_ID = "type_id";
+    	/** Type name. */
+    	String TYPE_NAME = "type_name";
+    	/** Type name. */
+    	String TYPE_DESCRIPTION = "type_description";
+    }
+
     interface NotesColumns {
         /** Time this note was created. */
         String NOTE_TIME = "note_time";
@@ -147,6 +156,7 @@ public class ScheduleContract {
     private static final String PATH_BETWEEN = "between";
     private static final String PATH_PARALLEL = "parallel";
     private static final String PATH_TAGS = "tags";
+    private static final String PATH_TYPES = "types";
     private static final String PATH_SEARCH = "search";
     private static final String PATH_SEARCH_SUGGEST = "search_suggest_query";
     private static final String PATH_SYNC = "sync";
@@ -307,6 +317,51 @@ public class ScheduleContract {
     }
 
     /**
+     * Types.
+     */
+    public static class Types implements TypesColumns, BaseColumns {
+        public static final Uri CONTENT_URI =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_TYPES).build();
+
+        public static final String CONTENT_TYPE =
+                "vnd.android.cursor.dir/vnd.devoxx.sessiontype";
+        public static final String CONTENT_ITEM_TYPE =
+                "vnd.android.cursor.item/vnd.devoxx.sessiontype";
+
+        /** Count of {@link Sessions} inside given type. */
+        public static final String SESSIONS_COUNT = "sessions_count";
+
+        /** Default "ORDER BY" clause. */
+        public static final String DEFAULT_SORT = TypesColumns.TYPE_NAME + " ASC";
+
+        /** Build {@link Uri} for requested {@link #TYPE_ID}. */
+        public static Uri buildTypeUri(String typeId) {
+            return CONTENT_URI.buildUpon().appendPath(typeId).build();
+        }
+
+        /**
+         * Build {@link Uri} that references any {@link Sessions} associated
+         * with the requested {@link #TYPE_ID}.
+         */
+        public static Uri buildSessionsDirUri(String typeId) {
+            return CONTENT_URI.buildUpon().appendPath(typeId).appendPath(PATH_SESSIONS).build();
+        }
+
+        /** Read {@link #TYPE_ID} from {@link Types} {@link Uri}. */
+        public static String getTypeId(Uri uri) {
+            return uri.getPathSegments().get(1);
+        }
+
+        /**
+         * Generate a {@link #TYPE_ID} that will always match the requested
+         * {@link Tags} details.
+         */
+        public static String generateTypeId(String typeName) {
+            return ParserUtils.sanitizeId(typeName);
+        }
+    }
+
+    /**
      * Rooms are physical locations at the conference venue.
      */
     public static class Rooms implements RoomsColumns, BaseColumns {
@@ -346,7 +401,7 @@ public class ScheduleContract {
      * Each session is a block of time that has a {@link Tracks}, a
      * {@link Rooms}, and zero or more {@link Speakers}.
      */
-    public static class Sessions implements SessionsColumns, BlocksColumns, RoomsColumns, BaseColumns {
+    public static class Sessions implements SessionsColumns, BlocksColumns, RoomsColumns, TypesColumns, BaseColumns {
         public static final Uri CONTENT_URI =
                 BASE_CONTENT_URI.buildUpon().appendPath(PATH_SESSIONS).build();
         public static final Uri CONTENT_STARRED_URI =
@@ -366,6 +421,7 @@ public class ScheduleContract {
         public static final String BLOCK_ID = "block_id";
         public static final String ROOM_ID = "room_id";
         public static final String TRACK_ID = "track_id";
+        public static final String TYPE_ID = "type_id";
 
         public static final String STARRED_IN_BLOCK_COUNT = "starred_in_block_count";
 

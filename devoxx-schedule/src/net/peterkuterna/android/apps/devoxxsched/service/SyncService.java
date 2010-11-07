@@ -28,6 +28,7 @@ import net.peterkuterna.android.apps.devoxxsched.io.LocalSearchSuggestHandler;
 import net.peterkuterna.android.apps.devoxxsched.io.RemoteExecutor;
 import net.peterkuterna.android.apps.devoxxsched.io.RemoteRoomsHandler;
 import net.peterkuterna.android.apps.devoxxsched.io.RemoteScheduleHandler;
+import net.peterkuterna.android.apps.devoxxsched.io.RemoteSessionTypesHandler;
 import net.peterkuterna.android.apps.devoxxsched.io.RemoteSessionsHandler;
 import net.peterkuterna.android.apps.devoxxsched.io.RemoteSpeakersHandler;
 import net.peterkuterna.android.apps.devoxxsched.model.RequestHash;
@@ -75,6 +76,7 @@ public class SyncService extends IntentService {
     	Constants.SPEAKERS_URL,
     	Constants.PRESENTATIONS_URL,
     	Constants.SCHEDULE_URL,
+    	Constants.LABS_PRESENTATION_TYPES_URL,
     	Constants.LABS_SPEAKERS_URL,
     	Constants.LABS_PRESENTATIONS_URL,
     	Constants.LABS_SCHEDULE_URL,
@@ -125,6 +127,7 @@ public class SyncService extends IntentService {
                 // Parse values from local cache first
                 mLocalExecutor.execute(R.xml.search_suggest, new LocalSearchSuggestHandler());
             	mLocalExecutor.execute(context, "cache-rooms.json", new RemoteRoomsHandler());
+            	mLocalExecutor.execute(context, "cache-presentationtypes.json", new RemoteSessionTypesHandler());
             	mLocalExecutor.execute(context, "cache-speakers.json", new RemoteSpeakersHandler());
             	mLocalExecutor.execute(context, "cache-presentations.json", new RemoteSessionsHandler());
             	mLocalExecutor.execute(context, "cache-schedule.json", new RemoteScheduleHandler());
@@ -141,6 +144,12 @@ public class SyncService extends IntentService {
 	            ArrayList<RequestHash> result = mRemoteExecutor.executeGet(new String [] {
 	            			Constants.ROOMS_URL,
 	            		}, new RemoteRoomsHandler());
+	            for (RequestHash requestHash : result) {
+	            	SyncUtils.updateLocalMd5(mResolver, requestHash.getUrl(), requestHash.getMd5());
+	            }
+	            result = mRemoteExecutor.executeGet(new String [] {
+            			Constants.LABS_PRESENTATION_TYPES_URL,
+            		}, new RemoteSessionTypesHandler());
 	            for (RequestHash requestHash : result) {
 	            	SyncUtils.updateLocalMd5(mResolver, requestHash.getUrl(), requestHash.getMd5());
 	            }

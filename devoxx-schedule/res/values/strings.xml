@@ -45,6 +45,7 @@
     <string name="title_starred">Starred</string>
     <string name="title_tracks">Tracks</string>
     <string name="title_tags">Tags</string>
+    <string name="title_session_types">Session types</string>
     <string name="title_new_sessions">New sessions</string>
     <string name="title_changed_starred_sessions">Changed starred sessions</string>
     <string name="title_myschedule">MySchedule registration</string>
@@ -92,6 +93,7 @@
     <string name="empty_session_detail">No session details found</string>
     <string name="empty_notes">No notes found</string>
     <string name="empty_tags">No tags found</string>
+    <string name="empty_sessiontypes">No presentation types found</string>
 
     <string name="session_summary">Summary</string>
     <string name="session_notes">Notes</string>
@@ -105,6 +107,7 @@
     <string name="session_subtitle"><xliff:g id="time">%1$s</xliff:g> in <xliff:g id="room">%2$s</xliff:g></string>
 
     <string name="sessions_track">By track</string>
+    <string name="sessions_type">By type</string>
     <string name="sessions_tag">By tag</string>
     <string name="sessions_all">All</string>
 
