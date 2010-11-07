@@ -11,12 +11,12 @@
 	},
 	{
 		"id":"BOF",
-		"name":"BOF",
+		"name":"BOFs",
 		"description":"Informal evening sessions of 1 hour with maximum 70 people per room."
 	},
 	{
 		"id":"QUICKIE",
-		"name":"Quickie",
+		"name":"Quickies",
 		"description":"15 minute sessions during the lunch breaks."
 	},
 	{
@@ -26,7 +26,7 @@
 	},
 	{
 		"id":"LABS",
-		"name":"Labs",
+		"name":"LABs",
 		"description":"Practical hands-on sessions of 3 hours (in the BOF rooms) with maximum 50 people per room."
 	}
 ]
