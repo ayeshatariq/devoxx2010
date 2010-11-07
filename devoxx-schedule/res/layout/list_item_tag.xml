@@ -35,6 +35,7 @@
   		android:layout_height="wrap_content"
   		android:layout_marginLeft="4dip"
   		android:layout_marginRight="4dip"
+        android:textAppearance="?android:attr/textAppearanceLarge"
   		android:background="@drawable/bullet_count"
   		style="@style/BulletCount" />
 
