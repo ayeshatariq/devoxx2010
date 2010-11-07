@@ -65,6 +65,7 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
     public static final String EXTRA_TRACK_COLOR = "net.peterkuterna.android.apps.devoxxsched.extra.TRACK_COLOR";
     public static final String EXTRA_NO_WEEKDAY_HEADER = "net.peterkuterna.android.apps.devoxxsched.extra.NO_WEEKDAY_HEADER";
     public static final String EXTRA_HIHGLIGHT_PARALLEL_STARRED = "net.peterkuterna.android.apps.devoxxsched.extra.HIGHLIGHT_PARALLEL_STARRED";
+    public static final String EXTRA_FAST_SCROLL = "net.peterkuterna.android.apps.devoxxsched.extra.FAST_SCROLL";
 
     private CursorAdapter mAdapter;
 
@@ -109,6 +110,7 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
             mAdapter = new SessionsAdapter(this);
             projection = SessionsQuery.PROJECTION;
             sort = SESSIONS_SORT;
+            getListView().setFastScrollEnabled(intent.getBooleanExtra(EXTRA_FAST_SCROLL, false));
         } else {
            	mAdapter = new SearchAdapter(this);
            	mNoWeekdayHeader = true;

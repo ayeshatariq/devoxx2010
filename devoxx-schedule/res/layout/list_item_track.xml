@@ -20,7 +20,6 @@
     android:orientation="horizontal"
     android:paddingTop="0dip"
     android:paddingBottom="0dip"
-    android:paddingRight="2dip"
     style="@style/ListItem">
 
     <TextView
@@ -28,15 +27,20 @@
         android:layout_weight="1"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_vertical"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:textColor="@android:color/primary_text_light"
-        android:gravity="center_vertical"
         android:minHeight="?android:attr/listPreferredItemHeight" />
 
-    <View
-        android:id="@android:id/icon1"
-        android:background="@drawable/ic_track"
-        android:layout_width="?android:attr/listPreferredItemHeight"
-        android:layout_height="?android:attr/listPreferredItemHeight" />
+ 	<TextView
+	   	android:id="@android:id/text2"
+  		android:layout_width="wrap_content"
+  		android:layout_height="wrap_content"
+  		android:layout_marginLeft="4dip"
+  		android:layout_marginRight="4dip"
+  		android:layout_gravity="center_vertical"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+  		android:background="@drawable/bullet_count"
+  		style="@style/BulletCount" />
 
 </LinearLayout>

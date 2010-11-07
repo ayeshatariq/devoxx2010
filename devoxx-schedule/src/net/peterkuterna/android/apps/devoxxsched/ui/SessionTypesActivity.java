@@ -77,6 +77,7 @@ public class SessionTypesActivity extends ListActivity implements AsyncQueryList
         final Uri sessionUri = Types.buildSessionsDirUri(typeId);
         final Intent intent = new Intent(Intent.ACTION_VIEW, sessionUri);
         intent.putExtra(Intent.EXTRA_TITLE, typeTitle);
+        intent.putExtra(SessionsActivity.EXTRA_FAST_SCROLL, true);
         startActivity(intent);
     }
 

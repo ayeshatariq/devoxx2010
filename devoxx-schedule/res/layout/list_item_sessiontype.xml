@@ -28,8 +28,8 @@
   		android:layout_marginTop="4dip"
   		android:layout_marginLeft="4dip"
   		android:layout_marginRight="4dip"
-  		android:background="@drawable/tag_count"
-  		style="@style/tagCount" />
+  		android:background="@drawable/bullet_count"
+  		style="@style/BulletCount" />
 
     <TextView
         android:id="@+id/sessiontype_name"

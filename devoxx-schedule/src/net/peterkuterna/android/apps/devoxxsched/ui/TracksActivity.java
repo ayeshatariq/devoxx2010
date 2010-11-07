@@ -22,14 +22,14 @@ package net.peterkuterna.android.apps.devoxxsched.ui;
 import net.peterkuterna.android.apps.devoxxsched.R;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Tracks;
 import net.peterkuterna.android.apps.devoxxsched.util.NotifyingAsyncQueryHandler;
-import net.peterkuterna.android.apps.devoxxsched.util.UIUtils;
 import net.peterkuterna.android.apps.devoxxsched.util.NotifyingAsyncQueryHandler.AsyncQueryListener;
+import net.peterkuterna.android.apps.devoxxsched.util.UIUtils;
 import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.PorterDuff;
-import android.graphics.drawable.LayerDrawable;
+import android.graphics.LightingColorFilter;
+import android.graphics.drawable.NinePatchDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.BaseColumns;
@@ -126,10 +126,10 @@ public class TracksActivity extends ListActivity implements AsyncQueryListener {
             textView.setText(cursor.getString(TracksQuery.TRACK_NAME));
 
             // Assign track color to visible block
-            final View iconView = view.findViewById(android.R.id.icon1);
-            LayerDrawable iconDrawable = (LayerDrawable) iconView.getBackground();
-            iconDrawable.getDrawable(0).setColorFilter(
-                    cursor.getInt(TracksQuery.TRACK_COLOR), PorterDuff.Mode.SRC_ATOP);
+            final TextView countView = (TextView) view.findViewById(android.R.id.text2);
+            countView.setText(cursor.getString(TracksQuery.SESSION_COUNT));
+            NinePatchDrawable drawable = (NinePatchDrawable) countView.getBackground();
+            drawable.setColorFilter(new LightingColorFilter(cursor.getInt(TracksQuery.TRACK_COLOR), 1));
         }
     }
 
@@ -147,5 +147,6 @@ public class TracksActivity extends ListActivity implements AsyncQueryListener {
         int TRACK_ID = 1;
         int TRACK_NAME = 2;
         int TRACK_COLOR = 3;
+        int SESSION_COUNT = 4;
     }
 }

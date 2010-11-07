@@ -101,6 +101,7 @@ public class SessionsOverviewActivity extends TabActivity {
 
         final Intent intent = new Intent(Intent.ACTION_VIEW, Sessions.CONTENT_URI);
         intent.addCategory(Intent.CATEGORY_TAB);
+        intent.putExtra(SessionsActivity.EXTRA_FAST_SCROLL, true);
 
         host.addTab(host.newTabSpec(TAG_ALL)
                 .setIndicator(buildIndicator(R.string.sessions_all))
