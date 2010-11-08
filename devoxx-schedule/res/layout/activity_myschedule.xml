@@ -93,27 +93,24 @@
 		        android:singleLine="true"
 		        android:inputType="textEmailAddress" />
 	
-		    <RelativeLayout
+		    <LinearLayout
 		    	android:layout_width="fill_parent"
 		    	android:layout_height="wrap_content"
+		    	android:orientation="horizontal"
 		    	android:paddingTop="10dip" >
-		    	
 		    	<Button android:id="@id/cancel_btn"
-		    		android:layout_alignParentLeft="true"
-		    		android:layout_alignParentTop="true"
-		    		android:layout_width="wrap_content"
+		    		android:layout_width="0dip"
 		    		android:layout_height="wrap_content"
+		    		android:layout_weight="1"
 		    		android:text="@android:string/cancel" >
 		    	</Button>
 		    	<Button android:id="@id/register_btn"
-		    		android:layout_alignParentRight="true"
-		    		android:layout_alignParentTop="true"
-		    		android:layout_width="wrap_content"
+		    		android:layout_width="0dip"
 		    		android:layout_height="wrap_content"
+		    		android:layout_weight="1"
 		    		android:text="@string/btn_myschedule_register" >
 		    	</Button>
-	
-		    </RelativeLayout>
+		    </LinearLayout>
 	
 	    </LinearLayout>
     </ScrollView>
@@ -155,27 +152,24 @@
 		        android:nextFocusDown="@id/ok_btn"
 		        android:numeric="integer" />
 		        
-		    <RelativeLayout
+		    <LinearLayout
 		    	android:layout_width="fill_parent"
 		    	android:layout_height="wrap_content"
+		    	android:orientation="horizontal"
 		    	android:paddingTop="10dip" >
-		    	
 		    	<Button android:id="@id/clear_btn"
-		    		android:layout_alignParentLeft="true"
-		    		android:layout_alignParentTop="true"
-		    		android:layout_width="wrap_content"
+		    		android:layout_width="0dip"
 		    		android:layout_height="wrap_content"
+		    		android:layout_weight="1"
 		    		android:text="@string/btn_myschedule_clear" >
 		    	</Button>
 		    	<Button android:id="@id/ok_btn"
-		    		android:layout_alignParentRight="true"
-		    		android:layout_alignParentTop="true"
-		    		android:layout_width="wrap_content"
+		    		android:layout_width="0dip"
 		    		android:layout_height="wrap_content"
+		    		android:layout_weight="1"
 		    		android:text="@android:string/ok" >
 		    	</Button>
-	
-		    </RelativeLayout>
+		    </LinearLayout>
 	
 	    </LinearLayout>
 	    
