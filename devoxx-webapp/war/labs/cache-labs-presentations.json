@@ -52,6 +52,18 @@
 		"tags":[
 			{
 				"name":"NetBeans"
+			},
+			{
+				"name":"desktop"
+			},
+			{
+				"name":"JavaSE"
+			},
+			{
+				"name":"Swing"
+			},
+			{
+				"name":"WebStart"
 			}
 		]
 	},
@@ -84,6 +96,18 @@
 			},
 			{
 				"name":"enterprise"
+			},
+			{
+				"name":"Arquillian"
+			},
+			{
+				"name":"TestNG"
+			},
+			{
+				"name":"JUnit"
+			},
+			{
+				"name":"ShrinkWrap"
 			}
 		]
 	},
@@ -124,11 +148,14 @@
 			},
 			{
 				"name":"geronimo"
+			},
+			{
+				"name":"eclipse"
 			}
 		]
 	},
 	{
-		"summary":"This workshop is designed to help experienced programmers learn Scala. It is not a beginning course in programming, but it doesn't assume any background in functional programming. So long as you are familiar with at least one of the (more or less) mainstream object-oriented languages (such as Java, C#, C++, Ruby, Python, or Smalltalk), this course is for you. Prior experience with Java or C# is a plus, but not a pre-requisite.\r\n\r\nThis Lab is co-taught by Bill Venners and Dick Wall. Bill is president of Artima, Inc., and coauthor with Martin Odersky and Lex Spoon, of Programming in Scala. He is also the lead developer of the open source ScalaTest testing framework. He is an experienced teacher, having taught in the past many workshops on Java, design, and Jini. Dick created and cohosts the popular Java Posse podcast. He founded and leads the Bay Area Scala Enthusiasts user group and has been a Scala practitioner for over two years. As a developer advocate at Google, he was trained to teach and interface with developers. And these guys are even funnier than they are handsome.\r\n\r\n\t* First steps in Scala\r\n\t\t- REPL\r\n\t\t- Exploring a Java API\r\n\t\t- Implicit java conversions\r\n\t*Collections and their higher order functions\r\n\t\t- Lists, Sets, Maps\r\n\t\t- Function literals/closures\r\n\t\t- Collection operations - map, foreach, zip, foldLeft, etc.\r\n\t* Classes/Objects/Traits\r\n\t\t- Classes - very similar to Java - less boilerplate\r\n\t\t- Objects - singletons - use instead of statics\r\n\t\t- Traits - interfaces with state and behavior, mixins, composition\r\n\t\t* Pattern matching/actors\r\n\t\t- Pattern matching on primitives & strings\r\n\t\t- Narrowing types\r\n\t\t- Case classes\r\n\t\t- Pattern matching case classes/unapply\r\n\t\t- Guards\r\n\t\t- Brief intro to actors",
+		"summary":"This workshop is designed to help experienced programmers learn Scala. It is not a beginning course in programming, but it doesn't assume any background in functional programming. So long as you are familiar with at least one of the (more or less) mainstream object-oriented languages (such as Java, C#, C++, Ruby, Python, or Smalltalk), this course is for you. Prior experience with Java or C# is a plus, but not a pre-requisite.\r\n\r\nThis Lab is co-taught by Bill Venners and Dick Wall. Bill is president of Artima, Inc., and coauthor with Martin Odersky and Lex Spoon, of Programming in Scala. He is also the lead developer of the open source ScalaTest testing framework. He is an experienced teacher, having taught in the past many workshops on Java, design, and Jini. Dick created and cohosts the popular Java Posse podcast. He founded and leads the Bay Area Scala Enthusiasts user group and has been a Scala practitioner for over two years. As a developer advocate at Google, he was trained to teach and interface with developers. And these guys are even funnier than they are handsome.\r\n\r\n\t* First steps in Scala\r\n\t\t- REPL\r\n\t\t- Exploring a Java API\r\n\t\t- Implicit java conversions\r\n\t* Collections and their higher order functions\r\n\t\t- Lists, Sets, Maps\r\n\t\t- Function literals/closures\r\n\t\t- Collection operations - map, foreach, zip, foldLeft, etc.\r\n\t* Classes/Objects/Traits\r\n\t\t- Classes - very similar to Java - less boilerplate\r\n\t\t- Objects - singletons - use instead of statics\r\n\t\t- Traits - interfaces with state and behavior, mixins, composition\r\n\t* Pattern matching/actors\r\n\t\t- Pattern matching on primitives & strings\r\n\t\t- Narrowing types\r\n\t\t- Case classes\r\n\t\t- Pattern matching case classes/unapply\r\n\t\t- Guards\r\n\t\t- Brief intro to actors",
 		"id":905,
 		"speakerUri":"http://cfp.devoxx.com/rest/v1/events/speakers/272",
 		"title":"Hands-On Scala",
@@ -149,6 +176,9 @@
 		"tags":[
 			{
 				"name":"scala"
+			},
+			{
+				"name":"repl"
 			}
 		]
 	},
@@ -228,6 +258,30 @@
 			},
 			{
 				"name":"javaee6"
+			},
+			{
+				"name":"EJB"
+			},
+			{
+				"name":"JPA"
+			},
+			{
+				"name":"JSF"
+			},
+			{
+				"name":"facelets"
+			},
+			{
+				"name":"REST"
+			},
+			{
+				"name":"NetBeans"
+			},
+			{
+				"name":"Maven"
+			},
+			{
+				"name":"GlassFish"
 			}
 		]
 	}
