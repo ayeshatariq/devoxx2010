@@ -25,6 +25,8 @@ import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.LightingColorFilter;
+import android.graphics.drawable.NinePatchDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.BaseColumns;
@@ -149,6 +151,8 @@ public class TagsActivity extends ListActivity implements AsyncQueryListener {
             tagView.setText(cursor.getString(TagsQuery.TAG_NAME));
             final TextView tagCountView = (TextView) view.findViewById(android.R.id.text2);
             tagCountView.setText(cursor.getString(TagsQuery.SESSION_COUNT));
+            NinePatchDrawable drawable = (NinePatchDrawable) tagCountView.getBackground();
+            drawable.setColorFilter(new LightingColorFilter(getResources().getColor(R.color.foreground1), 1));
         }
     }
 

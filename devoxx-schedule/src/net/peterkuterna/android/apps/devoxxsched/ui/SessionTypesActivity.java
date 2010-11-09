@@ -10,6 +10,8 @@ import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.LightingColorFilter;
+import android.graphics.drawable.NinePatchDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.BaseColumns;
@@ -106,6 +108,8 @@ public class SessionTypesActivity extends ListActivity implements AsyncQueryList
             descrView.setText(cursor.getString(TypesQuery.TYPE_DESCRIPTION));
             final TextView countView = (TextView) view.findViewById(id.sessiontype_count);
             countView.setText(cursor.getString(TypesQuery.SESSION_COUNT));
+            NinePatchDrawable drawable = (NinePatchDrawable) countView.getBackground();
+            drawable.setColorFilter(new LightingColorFilter(getResources().getColor(R.color.foreground1), 1));
         }
     }
 
