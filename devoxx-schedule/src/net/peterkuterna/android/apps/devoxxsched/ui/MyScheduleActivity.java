@@ -32,8 +32,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.message.BasicNameValuePair;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -131,9 +129,7 @@ public class MyScheduleActivity extends Activity {
         mOkButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				savePreferences();
-				setResult(RESULT_OK);
-				finish();
+				new ValidateTask().execute();
 			}
 		});
 
@@ -275,6 +271,60 @@ public class MyScheduleActivity extends Activity {
             	updateUI(true);
             } else {  
                 Toast.makeText(MyScheduleActivity.this, getResources().getText(R.string.myschedule_registration_nok), Toast.LENGTH_LONG).show();  
+            }  
+        }  
+
+    }
+
+    private class ValidateTask extends AsyncTask<Void, Void, Void> {
+
+    	private ProgressDialog mDialog;  
+    	private boolean mResultOk = false;
+        
+        protected void onPreExecute() {
+        	mDialog = ProgressDialog.show(MyScheduleActivity.this, null, "Validating...", true, false);
+        }  
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                final Context context = MyScheduleActivity.this;
+                final HttpClient httpClient = getHttpClient(context);
+                final HttpPost httpPost = new HttpPost(Constants.MYSCHEDULE_VALIDATE_URL);
+                
+                final ArrayList<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
+                nameValuePairs.add(new BasicNameValuePair("email", mEmail.getText().toString()));
+                nameValuePairs.add(new BasicNameValuePair("code", mActivationCode.getText().toString()));
+                httpPost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
+                final HttpResponse resp = httpClient.execute(httpPost);
+                final int statusCode = resp.getStatusLine().getStatusCode();
+                
+                if (statusCode != HttpStatus.SC_OK) {
+                	mResultOk = false;
+                	return null;
+                }
+                
+                mResultOk = true;
+            } catch (Exception e) {
+            	Log.e(TAG, e.getMessage());
+            	mResultOk = false;
+            	cancel(true);
+            }
+            
+            return null;
+        }
+
+        protected void onPostExecute(Void unused) {  
+            mDialog.dismiss();
+            
+            if (mResultOk) {
+                Toast.makeText(MyScheduleActivity.this, getResources().getText(R.string.myschedule_validation_ok), Toast.LENGTH_LONG).show();  
+				savePreferences();
+				setResult(RESULT_OK);
+				finish();
+            } else {  
+                Toast.makeText(MyScheduleActivity.this, getResources().getText(R.string.myschedule_validation_nok), Toast.LENGTH_LONG).show();  
             }  
         }  
 

@@ -27,6 +27,7 @@ public class Constants {
 	public static final String ROOMS_URL = REST_BASE_URL + "events/1/schedule/rooms";
 	public static final String SCHEDULE_URL = REST_BASE_URL + "events/1/schedule";
 	public static final String MYSCHEDULE_ACTIVATE_URL = REST_BASE_URL + "events/users/activate";
+	public static final String MYSCHEDULE_VALIDATE_URL = REST_BASE_URL + "events/users/validate";
 	public static final String MYSCHEDULE_PUBLISH_URL = REST_BASE_URL + "events/users/publish";
 	public static final String MYSCHEDULE_EMAIL_URL = REST_BASE_URL + "events/users/email";
 	

@@ -132,6 +132,9 @@
     <string name="myschedule_registration_message">Registrating...</string>
     <string name="myschedule_registration_ok">Successfully registered. Check e-mail for activation code.</string>
     <string name="myschedule_registration_nok">Could not complete registration.</string>
+    <string name="myschedule_validation_message">Validating...</string>
+    <string name="myschedule_validation_ok">Activation code successfully validated.</string>
+    <string name="myschedule_validation_nok">Activation could not be validated. Please check.</string>
     <string name="myschedule_email_message">Sending favorites...</string>
     <string name="myschedule_email_ok">Favorites send. Check your inbox for your MySchedule.</string>
     <string name="myschedule_email_nok">Could not send favorites for email delivery.</string>
