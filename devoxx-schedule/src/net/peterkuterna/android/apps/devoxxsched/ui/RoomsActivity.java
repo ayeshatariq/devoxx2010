@@ -78,6 +78,7 @@ public class RoomsActivity extends ListActivity implements AsyncQueryListener {
         final Intent intent = new Intent(Intent.ACTION_VIEW, sessionUri);
         intent.putExtra(Intent.EXTRA_TITLE, roomTitle);
         intent.putExtra(SessionsActivity.EXTRA_FAST_SCROLL, true);
+        intent.putExtra(SessionsActivity.EXTRA_FOCUS_CURRENT_NEXT_SESSION, true);
         startActivity(intent);
     }
 

@@ -103,6 +103,7 @@ public class TracksActivity extends ListActivity implements AsyncQueryListener {
         intent.putExtra(Intent.EXTRA_TITLE, trackTitle);
         intent.putExtra(SessionsActivity.EXTRA_TRACK_COLOR, trackColor);
         intent.putExtra(SessionsActivity.EXTRA_FAST_SCROLL, true);
+        intent.putExtra(SessionsActivity.EXTRA_FOCUS_CURRENT_NEXT_SESSION, true);
         startActivity(intent);
     }
 

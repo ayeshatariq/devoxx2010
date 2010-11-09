@@ -47,5 +47,10 @@
 			android:title="@string/settings_visualize_parallel_starred_sessions"
 			android:summary="@string/settings_visualize_parallel_starred_sessions_summary"
 			android:defaultValue="false" />
+		<CheckBoxPreference 
+			android:key="@string/focus_session_during_conference_key"
+			android:title="@string/settings_focus_session_during_conference"
+			android:summary="@string/settings_focus_session_during_conference_summary"
+			android:defaultValue="true" />
 	</PreferenceCategory>
 </PreferenceScreen>

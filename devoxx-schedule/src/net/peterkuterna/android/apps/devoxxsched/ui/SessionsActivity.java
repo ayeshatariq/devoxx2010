@@ -38,6 +38,7 @@ import net.peterkuterna.android.apps.devoxxsched.util.UIUtils;
 import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.CursorWrapper;
 import android.database.DataSetObserver;
@@ -65,6 +66,7 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
     public static final String EXTRA_TRACK_COLOR = "net.peterkuterna.android.apps.devoxxsched.extra.TRACK_COLOR";
     public static final String EXTRA_NO_WEEKDAY_HEADER = "net.peterkuterna.android.apps.devoxxsched.extra.NO_WEEKDAY_HEADER";
     public static final String EXTRA_HIHGLIGHT_PARALLEL_STARRED = "net.peterkuterna.android.apps.devoxxsched.extra.HIGHLIGHT_PARALLEL_STARRED";
+    public static final String EXTRA_FOCUS_CURRENT_NEXT_SESSION = "net.peterkuterna.android.apps.devoxxsched.extra.FOCUS_CURRENT_NEXT_SESSION";
     public static final String EXTRA_FAST_SCROLL = "net.peterkuterna.android.apps.devoxxsched.extra.FAST_SCROLL";
 
     private CursorAdapter mAdapter;
@@ -73,11 +75,10 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
     private Handler mMessageQueueHandler = new Handler();
     private boolean mNoWeekdayHeader = false;
     private boolean mHighlightParallelStarred = false;
+    private boolean mFocusCurrentNextSession = false;
     
     private int mTrackColor= -1;
     
-//    private final Reflect reflect = new Reflect();
-
     private static final String SESSIONS_SORT = Sessions.BLOCK_START + " ASC," + Rooms.NAME + " ASC";
 
     @Override
@@ -98,10 +99,14 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
         final Intent intent = getIntent();
         final Uri sessionsUri = intent.getData();
 
+        final SharedPreferences settingsPrefs = getSharedPreferences(SettingsActivity.SETTINGS_NAME, MODE_PRIVATE);
+        final boolean prefFocusCurrentNextSession = settingsPrefs.getBoolean(getString(R.string.focus_session_during_conference_key), true);
+
         mTrackColor = intent.getIntExtra(EXTRA_TRACK_COLOR, -1);
         mNoWeekdayHeader = intent.getBooleanExtra(EXTRA_NO_WEEKDAY_HEADER, false);
         mHighlightParallelStarred = intent.getBooleanExtra(EXTRA_HIHGLIGHT_PARALLEL_STARRED, false);
-        
+        mFocusCurrentNextSession = prefFocusCurrentNextSession && intent.getBooleanExtra(EXTRA_FOCUS_CURRENT_NEXT_SESSION, false);
+               
         if (mTrackColor != -1) UIUtils.setTitleBarColor(findViewById(R.id.title_container), mTrackColor);
 
         String[] projection;
@@ -127,46 +132,56 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
 
     /** {@inheritDoc} */
     public void onQueryComplete(int token, Object cookie, Cursor cursor) {
-    	// TODO implement scrolling correctly
-//    	int scrollPos = -1;
     	if (mNoWeekdayHeader) {
     		startManagingCursor(cursor);
-//    		scrollPos = getScrollPosition(cursor);
     		mAdapter.changeCursor(cursor);
     	} else {
 	    	final SessionsCursorWrapper cursorWrapper = new SessionsCursorWrapper(cursor, this);
 	        startManagingCursor(cursorWrapper);
-//    		scrollPos = getScrollPosition(cursorWrapper);
 	        mAdapter.changeCursor(cursorWrapper);
     	}
-//    	if (scrollPos != -1) reflect.scrollTo(getListView(), scrollPos, scrollPos);
+    	
+    	if (mFocusCurrentNextSession) {
+	    	getListView().post(new Runnable() {
+				@Override
+				public void run() {
+					final Cursor cursor = mAdapter.getCursor();
+					if (cursor != null && !cursor.isClosed()) {
+						int scrollPos = getScrollPosition(mAdapter.getCursor());
+						if (scrollPos != -1) getListView().setSelection(scrollPos);
+					}
+				}
+			});
+    	}
     }
     
-//    private int getScrollPosition(Cursor cursor) {
-//    	int scrollPos = -1;
-//    	
-//    	final long currentTime = System.currentTimeMillis();
-//    	
-//        if (currentTime > UIUtils.CONFERENCE_START_MILLIS &&
-//        		currentTime < UIUtils.CONFERENCE_END_MILLIS) {
-//	    	for (int i = 0; i < cursor.getCount(); i++) {
-//	    		if (cursor instanceof SessionsCursorWrapper) {
-//	    			final SessionsCursorWrapper cursorWrapper = (SessionsCursorWrapper) cursor;
-//	    			if (cursorWrapper.getItemViewType(i) != 0) continue;
-//	    		}
-//	    		cursor.moveToPosition(i);
-//	    		long blockEnd = cursor.getLong(SessionsQuery.BLOCK_END);
-//	    		if (currentTime < blockEnd) {
-//	    			scrollPos = i;
-//	    			break;
-//	    		}
-//	    	}
-//	    	
-//	    	if ((cursor instanceof SessionsCursorWrapper) && (scrollPos == 1)) scrollPos = 0;
-//        }
-//    	
-//    	return scrollPos;
-//    }
+    private int getScrollPosition(Cursor cursor) {
+    	int scrollPos = -1;
+    	
+    	final long currentTime = System.currentTimeMillis();
+    	
+        if (currentTime > UIUtils.CONFERENCE_START_MILLIS &&
+        		currentTime < UIUtils.CONFERENCE_END_MILLIS) {
+	    	for (int i = 0; i < cursor.getCount(); i++) {
+	    		if (cursor instanceof SessionsCursorWrapper) {
+	    			final SessionsCursorWrapper cursorWrapper = (SessionsCursorWrapper) cursor;
+	    			if (cursorWrapper.getItemViewType(i) != 0) continue;
+	    		}
+	    		cursor.moveToPosition(i);
+	    		long blockStart = cursor.getLong(SessionsQuery.BLOCK_START);
+	    		long blockEnd = cursor.getLong(SessionsQuery.BLOCK_END);
+	    		if ((currentTime >= blockStart && currentTime <= blockEnd)
+	    				|| currentTime <= blockEnd) {
+	    			scrollPos = i;
+	    			break;
+	    		}
+	    	}
+	    	
+	    	if ((cursor instanceof SessionsCursorWrapper) && (scrollPos == 1)) scrollPos = 0;
+        }
+    	
+    	return scrollPos;
+    }
 
     @Override
     protected void onResume() {
@@ -560,44 +575,5 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
         int TRACK_COLOR = 5;
      
     }
-    
-//    /**
-//     * Reflection class to use the smooth scrolling when available (Android2.2+)
-//     */
-//    public static class Reflect {
-//
-//		private static Method mListView_smoothScrollToPosition;
-//
-//		static {
-//			initCompatibility();
-//		};
-//
-//		private static void initCompatibility() {
-//			try {
-//				mListView_smoothScrollToPosition = AbsListView.class
-//						.getMethod("smoothScrollToPosition",
-//								new Class[] { int.class, int.class });
-//			} catch (NoSuchMethodException nsme) {
-//			}
-//		}
-//
-//		private static void smoothScrollToPosition(AbsListView listView, int position, int boundPosition) {
-//			try {
-//				mListView_smoothScrollToPosition.invoke(listView, position, boundPosition);
-//			} catch (InvocationTargetException ite) {
-//				System.err.println("unexpected " + ite);
-//			} catch (IllegalAccessException ie) {
-//				System.err.println("unexpected " + ie);
-//			}
-//		}
-//
-//		public void scrollTo(ListView listView, int position, int boundPosition) {
-//			if (mListView_smoothScrollToPosition != null) {
-//				smoothScrollToPosition(listView, position, boundPosition);
-//			} else {
-//				listView.setSelection(position);
-//			}
-//		}
-//	}
     
 }

@@ -97,6 +97,7 @@ public class TagsActivity extends ListActivity implements AsyncQueryListener {
         final Uri sessionUri = Tags.buildSessionsDirUri(tagId);
         final Intent intent = new Intent(Intent.ACTION_VIEW, sessionUri);
         intent.putExtra(Intent.EXTRA_TITLE, tagTitle);
+        intent.putExtra(SessionsActivity.EXTRA_FOCUS_CURRENT_NEXT_SESSION, true);
         startActivity(intent);
     }
 

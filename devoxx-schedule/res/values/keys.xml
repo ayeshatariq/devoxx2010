@@ -20,4 +20,5 @@
   <string name="notify_new_sessions_key">notifyNew</string>
   <string name="notify_changed_starred_sessions_key">notifyChanged</string>
   <string name="visualize_parallel_starred_sessions_key">highlightParallelStarred</string>
+  <string name="focus_session_during_conference_key">focusSessionDuringConference</string>
 </resources>
