@@ -92,6 +92,17 @@
 			</intent-filter>
 		</activity>
 
+		<activity android:name=".ui.RoomsActivity" 
+			android:theme="@style/Theme.DevoxxSched"
+			android:label="@string/title_rooms">
+			<intent-filter>
+				<action android:name="android.intent.action.VIEW" />
+				<category android:name="android.intent.category.DEFAULT" />
+				<category android:name="android.intent.category.TAB" />
+				<data android:mimeType="vnd.android.cursor.dir/vnd.devoxx.room" />
+			</intent-filter>
+		</activity>
+
 		<activity android:name=".ui.SessionsActivity" 
 			android:theme="@style/Theme.DevoxxSched"
 			android:label="@string/title_sessions">

@@ -17,6 +17,7 @@
 package net.peterkuterna.android.apps.devoxxsched.ui;
 
 import net.peterkuterna.android.apps.devoxxsched.R;
+import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Rooms;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Sessions;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Tags;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Tracks;
@@ -36,6 +37,7 @@ public class SessionsOverviewActivity extends TabActivity {
     public static final String TAG_TRACK = "track";
     public static final String TAG_TYPE = "type";
     public static final String TAG_TAG = "tag";
+    public static final String TAG_ROOM = "room";
     public static final String TAG_ALL = "all";
     
     @Override
@@ -48,6 +50,7 @@ public class SessionsOverviewActivity extends TabActivity {
         setupTrackTab();
         setupTypesTab();
         setupTagTab();
+        setupRoomTab();
         setupAllTab();
     }
 
@@ -92,6 +95,18 @@ public class SessionsOverviewActivity extends TabActivity {
 
         host.addTab(host.newTabSpec(TAG_TAG)
                 .setIndicator(buildIndicator(R.string.sessions_tag))
+                .setContent(intent));
+    }
+
+    /** Build and add "rooms" tab. */
+    private void setupRoomTab() {
+        final TabHost host = getTabHost();
+
+        final Intent intent = new Intent(Intent.ACTION_VIEW, Rooms.CONTENT_URI);
+        intent.addCategory(Intent.CATEGORY_TAB);
+
+        host.addTab(host.newTabSpec(TAG_ROOM)
+                .setIndicator(buildIndicator(R.string.sessions_room))
                 .setContent(intent));
     }
 

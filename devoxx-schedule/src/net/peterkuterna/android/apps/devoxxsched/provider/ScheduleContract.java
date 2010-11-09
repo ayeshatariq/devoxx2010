@@ -373,12 +373,24 @@ public class ScheduleContract {
         public static final String CONTENT_ITEM_TYPE =
                 "vnd.android.cursor.item/vnd.devoxx.room";
 
+        /** Count of {@link Sessions} inside given type. */
+        public static final String SESSIONS_COUNT = "sessions_count";
+
         /** Default "ORDER BY" clause. */
         public static final String DEFAULT_SORT = RoomsColumns.ROOM_ID + " ASC";
+        public static final String ROOM_NAME_SORT = RoomsColumns.NAME + " ASC";
 
         /** Build {@link Uri} for requested {@link #ROOM_ID}. */
         public static Uri buildRoomUri(String roomId) {
             return CONTENT_URI.buildUpon().appendPath(roomId).build();
+        }
+
+        /**
+         * Build {@link Uri} that references any {@link Sessions} associated
+         * with the requested {@link #ROOM_ID}.
+         */
+        public static Uri buildSessionsDirUri(String roomId) {
+            return CONTENT_URI.buildUpon().appendPath(roomId).appendPath(PATH_SESSIONS).build();
         }
 
         /** Build {@link Uri} for requested {@link Rooms} with name {@link #NAME}. */
