@@ -928,14 +928,16 @@ public class ScheduleProvider extends ContentProvider {
                 + Tables.SESSIONS + " WHERE " + Qualified.SESSIONS_BLOCK_ID + "="
                 + Qualified.BLOCKS_BLOCK_ID + ")";
 
-        String BLOCK_STARRED_SESSIONS_COUNT = "(SELECT COUNT(" + Qualified.SESSIONS_SESSION_ID + ") FROM "
-        	+ Tables.SESSIONS + " WHERE " + Qualified.SESSIONS_STARRED + "=1 AND "
-        	+ "((" + Blocks.BLOCK_START + ">=" + Qualified.BLOCKS_BLOCK_START + " AND " 
-        	+ Blocks.BLOCK_END + "<=" + Qualified.BLOCKS_BLOCK_END + ") OR (" + Blocks.BLOCK_END 
-        	+ ">=" + Qualified.BLOCKS_BLOCK_START + " AND " + Blocks.BLOCK_END + "<=" 
-        	+ Qualified.BLOCKS_BLOCK_END + ") OR (" + Blocks.BLOCK_START + "<=" 
-        	+ Qualified.BLOCKS_BLOCK_END + " AND " + Blocks.BLOCK_START + ">="
-        	+ Qualified.BLOCKS_BLOCK_START + ")))";
+        String BLOCK_STARRED_SESSIONS_COUNT = "(SELECT COUNT(" + Qualified.S_SESSION_ID + ") FROM "
+        	+ Tables.SESSIONS + " AS S LEFT OUTER JOIN " + Tables.BLOCKS + " AS B ON " 
+        	+ Qualified.S_BLOCK_ID + "=" + Qualified.B_BLOCK_ID + " WHERE " 
+        	+ Qualified.S_STARRED + "=1 AND " + "((" + Qualified.BLOCKS_BLOCK_START + ">=" 
+        	+ Qualified.B_BLOCK_START + " AND " + Qualified.BLOCKS_BLOCK_END + "<=" 
+        	+ Qualified.B_BLOCK_END + ") OR (" + Qualified.BLOCKS_BLOCK_END + ">=" 
+        	+ Qualified.B_BLOCK_START + " AND " + Qualified.BLOCKS_BLOCK_END + "<=" 
+        	+ Qualified.B_BLOCK_END + ") OR (" + Qualified.BLOCKS_BLOCK_START + "<=" 
+        	+ Qualified.B_BLOCK_END + " AND " + Qualified.BLOCKS_BLOCK_START + ">="
+        	+ Qualified.B_BLOCK_START + ")))";
 
         String BLOCK_CONTAINS_STARRED = "(SELECT MAX(" + Qualified.SESSIONS_STARRED + ") FROM "
                 + Tables.SESSIONS + " WHERE " + Qualified.SESSIONS_BLOCK_ID + "="
@@ -1020,6 +1022,13 @@ public class ScheduleProvider extends ContentProvider {
         String BLOCKS_BLOCK_END = Tables.BLOCKS + "." + Blocks.BLOCK_END;
 
         String NOTES_SESSION_ID = Tables.NOTES + "." + Notes.SESSION_ID;
+
+        String S_SESSION_ID = "S." + Sessions.SESSION_ID;
+        String S_BLOCK_ID = "S." + Sessions.BLOCK_ID;
+        String S_STARRED = "S." + Sessions.STARRED;
+        String B_BLOCK_ID = "B." + Blocks.BLOCK_ID;
+        String B_BLOCK_START = "B." + Blocks.BLOCK_START;
+        String B_BLOCK_END = "B." + Blocks.BLOCK_END;
     }
 
 }
