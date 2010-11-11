@@ -933,9 +933,9 @@ public class ScheduleProvider extends ContentProvider {
         	+ Qualified.S_BLOCK_ID + "=" + Qualified.B_BLOCK_ID + " WHERE " 
         	+ Qualified.S_STARRED + "=1 AND " + "((" + Qualified.BLOCKS_BLOCK_START + ">=" 
         	+ Qualified.B_BLOCK_START + " AND " + Qualified.BLOCKS_BLOCK_END + "<=" 
-        	+ Qualified.B_BLOCK_END + ") OR (" + Qualified.BLOCKS_BLOCK_END + ">=" 
+        	+ Qualified.B_BLOCK_END + ") OR (" + Qualified.BLOCKS_BLOCK_END + ">" 
         	+ Qualified.B_BLOCK_START + " AND " + Qualified.BLOCKS_BLOCK_END + "<=" 
-        	+ Qualified.B_BLOCK_END + ") OR (" + Qualified.BLOCKS_BLOCK_START + "<=" 
+        	+ Qualified.B_BLOCK_END + ") OR (" + Qualified.BLOCKS_BLOCK_START + "<" 
         	+ Qualified.B_BLOCK_END + " AND " + Qualified.BLOCKS_BLOCK_START + ">="
         	+ Qualified.B_BLOCK_START + ")))";
 
