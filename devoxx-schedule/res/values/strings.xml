@@ -123,8 +123,8 @@
     <string name="map_ground">Ground floor</string>
     <string name="map_talks">Talks floor</string>
 
-    <string name="myschedule_info">Register yourself with the Devoxx MySchedule and get your schedule in your inbox or publish it on the Devoxx wiki.</string>
-    <string name="myschedule_enter_code">Enter the activation code that was e-mailed to the provided e-mail address to complete the Devoxx MySchedule registration.</string>
+    <string name="myschedule_info">Register yourself with the Devoxx™ MySchedule and get your schedule in your inbox or publish it on the Devoxx™ wiki.</string>
+    <string name="myschedule_enter_code">Enter the activation code that was e-mailed to the provided e-mail address to complete the Devoxx™ MySchedule registration.</string>
     <string name="myschedule_firstname">First name</string>
     <string name="myschedule_lastname">Last name</string>
     <string name="myschedule_email">E-mail</string>
@@ -139,7 +139,7 @@
     <string name="myschedule_email_ok">Favorites send. Check your inbox for your MySchedule.</string>
     <string name="myschedule_email_nok">Could not send favorites for email delivery.</string>
     <string name="myschedule_publish_message">Publishing favorites...</string>
-    <string name="myschedule_publish_ok">Favorites published. Check your MySchedule page on the Devoxx Schedules wiki.</string>
+    <string name="myschedule_publish_ok">Favorites published. Check your MySchedule page on the Devoxx™ Schedules wiki.</string>
     <string name="myschedule_publish_nok">Could not publish favorites.</string>
 
     <string name="myschedule_email_title">Email MySchedule?</string>
@@ -188,7 +188,7 @@
     <string name="now_playing_after_subtitle">Thanks for tuning in.</string>
     
     <string name="about_text1">Based on the Google I/O 2010 Schedule application, which was released under the Apache 2.0 license.</string>
-    <string name="about_text2">Source code modified for the Devoxx 2010 Java Community Conference by:</string>
+    <string name="about_text2">Source code modified for the Devoxx™ 2010 Java Community Conference by:</string>
     <string name="about_text3">Peter Kuterna\r\npeter.kuterna@gmail.com\r\nhttp://twitter.com/peterkuterna</string>
     <string name="about_text4">Source code available at http://code.google.com/p/devoxx2010</string>
     <string name="about_text5">Version %s</string>
