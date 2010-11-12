@@ -25,6 +25,7 @@ import java.util.ArrayList;
 
 import net.peterkuterna.android.apps.devoxxsched.Constants;
 import net.peterkuterna.android.apps.devoxxsched.R;
+import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.SessionCounts;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Sessions;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Speakers;
 import net.peterkuterna.android.apps.devoxxsched.ui.MyScheduleActivity.MySchedulePrefs;
@@ -250,10 +251,15 @@ public class StarredActivity extends TabActivity implements AsyncQueryListener {
     private void setupSessionsTab() {
         final TabHost host = getTabHost();
 
-        final Intent intent = new Intent(Intent.ACTION_VIEW, Sessions.CONTENT_STARRED_URI);
+        final Uri uri = Sessions.CONTENT_STARRED_URI
+	    	.buildUpon()
+	    	.appendQueryParameter(SessionCounts.SESSION_INDEX_EXTRAS, Boolean.TRUE.toString())
+	    	.build();
+        final Intent intent = new Intent(Intent.ACTION_VIEW, uri);
         intent.addCategory(Intent.CATEGORY_TAB);
         final boolean highlightParalleStarred = settingsPrefs.getBoolean(getString(R.string.visualize_parallel_starred_sessions_key), false);
         intent.putExtra(SessionsActivity.EXTRA_HIHGLIGHT_PARALLEL_STARRED, highlightParalleStarred);
+        intent.putExtra(SessionsActivity.EXTRA_FOCUS_CURRENT_NEXT_SESSION, true);
         
         // Sessions content comes from reused activity
         host.addTab(host.newTabSpec(TAG_SESSIONS)

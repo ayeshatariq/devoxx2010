@@ -18,6 +18,7 @@ package net.peterkuterna.android.apps.devoxxsched.ui;
 
 import net.peterkuterna.android.apps.devoxxsched.R;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Rooms;
+import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.SessionCounts;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Sessions;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Tags;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Tracks;
@@ -25,6 +26,7 @@ import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Types
 import net.peterkuterna.android.apps.devoxxsched.util.UIUtils;
 import android.app.TabActivity;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TabHost;
@@ -114,9 +116,12 @@ public class SessionsOverviewActivity extends TabActivity {
     private void setupAllTab() {
         final TabHost host = getTabHost();
 
-        final Intent intent = new Intent(Intent.ACTION_VIEW, Sessions.CONTENT_URI);
+        final Uri uri = Sessions.CONTENT_URI
+        	.buildUpon()
+        	.appendQueryParameter(SessionCounts.SESSION_INDEX_EXTRAS, Boolean.TRUE.toString())
+        	.build();
+        final Intent intent = new Intent(Intent.ACTION_VIEW, uri);
         intent.addCategory(Intent.CATEGORY_TAB);
-        intent.putExtra(SessionsActivity.EXTRA_FAST_SCROLL, true);
         intent.putExtra(SessionsActivity.EXTRA_FOCUS_CURRENT_NEXT_SESSION, true);
 
         host.addTab(host.newTabSpec(TAG_ALL)

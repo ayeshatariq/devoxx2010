@@ -65,9 +65,8 @@ public class UIUtils {
     public static final long CONFERENCE_END_MILLIS = ParserUtils.parseTime(
             "2010-11-19T12:50:00.000+01:00");
 
-    /** Flags used with {@link DateUtils#formatDateRange}. */
-    private static final int TIME_FLAGS = DateUtils.FORMAT_SHOW_TIME
-            | DateUtils.FORMAT_SHOW_WEEKDAY | DateUtils.FORMAT_ABBREV_WEEKDAY;
+    private static final int DAY_FLAGS = DateUtils.FORMAT_SHOW_WEEKDAY | DateUtils.FORMAT_ABBREV_WEEKDAY;
+    private static final int TIME_FLAGS = DateUtils.FORMAT_SHOW_TIME;
 
     private static final int BRIGHTNESS_THRESHOLD = 150;
 
@@ -137,9 +136,7 @@ public class UIUtils {
     	final int darkenColor = darkenColor(color);
     	
     	headerItem.setBackgroundColor(lightenColor);
-    	headerItem.findViewById(R.id.divider_top).setBackgroundColor(darkenColor);
-    	headerItem.findViewById(R.id.divider_bottom).setBackgroundColor(darkenColor);
-        ((TextView) headerItem.findViewById(R.id.session_header)).setTextColor(darkenColor);
+        ((TextView) headerItem.findViewById(R.id.header_text)).setTextColor(darkenColor);
     }
 
     /**
@@ -190,12 +187,13 @@ public class UIUtils {
             String roomName, Context context) {
         TimeZone.setDefault(CONFERENCE_TIME_ZONE);
 
-        // NOTE: There is an efficient version of formatDateRange in Eclair and
-        // beyond that allows you to recycle a StringBuilder.
+        final CharSequence dayString = DateUtils.formatDateRange(context,
+                blockStart, blockEnd, DAY_FLAGS);
+
         final CharSequence timeString = DateUtils.formatDateRange(context,
                 blockStart, blockEnd, TIME_FLAGS);
 
-        return context.getString(R.string.session_subtitle, timeString, roomName);
+        return context.getString(R.string.session_subtitle, dayString, timeString, roomName);
     }
     
     public static String formatWeekdayHeader(long millis, Context context) {

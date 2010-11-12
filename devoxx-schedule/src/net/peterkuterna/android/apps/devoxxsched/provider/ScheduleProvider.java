@@ -27,6 +27,7 @@ import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Block
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Notes;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Rooms;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.SearchSuggest;
+import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.SessionCounts;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Sessions;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Speakers;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Sync;
@@ -52,12 +53,16 @@ import android.content.Context;
 import android.content.OperationApplicationException;
 import android.content.UriMatcher;
 import android.database.Cursor;
+import android.database.CursorWrapper;
 import android.database.MatrixCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.provider.BaseColumns;
 import android.provider.OpenableColumns;
+import android.text.TextUtils;
+import android.text.format.DateUtils;
 import android.util.Log;
 
 
@@ -67,8 +72,10 @@ import android.util.Log;
  */
 public class ScheduleProvider extends ContentProvider {
 
-	private static final String TAG = "ScheduleProvider";
+    private static final String TAG = "ScheduleProvider";
     private static final boolean LOGV = Log.isLoggable(TAG, Log.VERBOSE);
+    
+    private static final int DAY_FLAGS = DateUtils.FORMAT_SHOW_WEEKDAY;
 
     private ScheduleDatabase mOpenHelper;
 
@@ -298,7 +305,11 @@ public class ScheduleProvider extends ContentProvider {
             default: {
                 // Most cases are handled with simple SelectionBuilder
                 final SelectionBuilder builder = buildExpandedSelection(uri, match);
-                return builder.where(selection, selectionArgs).query(db, projection, sortOrder);
+                Cursor cursor = builder.where(selection, selectionArgs).query(db, projection, sortOrder);
+                if (readBooleanQueryParameter(uri, SessionCounts.SESSION_INDEX_EXTRAS, false)) {
+                	cursor = bundleSessionCountExtras(cursor, db, builder, selection, selectionArgs, sortOrder);
+                }
+                return cursor;
             }
             case NOTES_EXPORT: {
                 // Provide query values for file attachments
@@ -923,6 +934,105 @@ public class ScheduleProvider extends ContentProvider {
         }
     }
     
+    private Cursor bundleSessionCountExtras(Cursor cursor, final SQLiteDatabase db,
+            SelectionBuilder sb, String selection, String[] selectionArgs, String sortOrder) {
+        String sortKey;
+
+        // The sort order suffix could be something like "DESC".
+        // We want to preserve it in the query even though we will change
+        // the sort column itself.
+        String sortOrderSuffix = "";
+        if (sortOrder != null) {
+            int spaceIndex = sortOrder.indexOf(' ');
+            if (spaceIndex != -1) {
+                sortKey = sortOrder.substring(0, spaceIndex);
+                sortOrderSuffix = sortOrder.substring(spaceIndex);
+            } else {
+                sortKey = sortOrder;
+            }
+        } else {
+            sortKey = Sessions.SESSION_ID;
+        }
+
+        sb.map(SessionsIndexQuery.COUNT, "COUNT(" + Sessions.SESSION_ID + ")");
+
+        Cursor indexCursor = sb.query(db, SessionsIndexQuery.COLUMNS,
+                SessionsIndexQuery.ORDER_BY, null /* having */,
+                SessionsIndexQuery.ORDER_BY + sortOrderSuffix, null);
+
+        try {
+            int groupCount = indexCursor.getCount();
+            String weekdays[] = new String[groupCount];
+            int counts[] = new int[groupCount];
+            int indexCount = 0;
+            String currentWeekday = null;
+
+            // Since GET_PHONEBOOK_INDEX is a many-to-1 function, we may end up
+            // with multiple entries for the same title.  The following code
+            // collapses those duplicates.
+            for (int i = 0; i < groupCount; i++) {
+                indexCursor.moveToNext();
+                long millis = indexCursor.getLong(SessionsIndexQuery.BLOCK_START);
+                String weekday = DateUtils.formatDateTime(getContext(), millis, DAY_FLAGS);
+                int count = indexCursor.getInt(SessionsIndexQuery.COLUMN_COUNT);
+                if (indexCount == 0 || !TextUtils.equals(weekday, currentWeekday)) {
+                    weekdays[indexCount] = currentWeekday = weekday;
+                    counts[indexCount] = count;
+                    indexCount++;
+                } else {
+                    counts[indexCount - 1] += count;
+                }
+            }
+
+            if (indexCount < groupCount) {
+                String[] newWeekdays = new String[indexCount];
+                System.arraycopy(weekdays, 0, newWeekdays, 0, indexCount);
+                weekdays = newWeekdays;
+
+                int[] newCounts = new int[indexCount];
+                System.arraycopy(counts, 0, newCounts, 0, indexCount);
+                counts = newCounts;
+            }
+
+            final Bundle bundle = new Bundle();
+            bundle.putStringArray(SessionCounts.EXTRA_SESSION_INDEX_WEEKDAYS, weekdays);
+            bundle.putIntArray(SessionCounts.EXTRA_SESSION_INDEX_COUNTS, counts);
+            return new CursorWrapper(cursor) {
+                @Override
+                public Bundle getExtras() {
+                    return bundle;
+                }
+            };
+        } finally {
+            indexCursor.close();
+        }
+    }
+
+    static boolean readBooleanQueryParameter(Uri uri, String parameter, boolean defaultValue) {
+        // Manually parse the query, which is much faster than calling uri.getQueryParameter
+        String query = uri.getEncodedQuery();
+        if (query == null) {
+            return defaultValue;
+        }
+
+        int index = query.indexOf(parameter);
+        if (index == -1) {
+            return defaultValue;
+        }
+
+        index += parameter.length();
+
+        return !matchQueryParameter(query, index, "=0", false)
+                && !matchQueryParameter(query, index, "=false", true);
+    }
+
+    private static boolean matchQueryParameter(String query, int index, String value,
+            boolean ignoreCase) {
+        int length = value.length();
+        return query.regionMatches(ignoreCase, index, value, 0, length)
+                && (query.length() == index + length || query.charAt(index + length) == '&');
+    }
+
     private interface Subquery {
         String BLOCK_SESSIONS_COUNT = "(SELECT COUNT(" + Qualified.SESSIONS_SESSION_ID + ") FROM "
                 + Tables.SESSIONS + " WHERE " + Qualified.SESSIONS_BLOCK_ID + "="
@@ -1029,6 +1139,21 @@ public class ScheduleProvider extends ContentProvider {
         String B_BLOCK_ID = "B." + Blocks.BLOCK_ID;
         String B_BLOCK_START = "B." + Blocks.BLOCK_START;
         String B_BLOCK_END = "B." + Blocks.BLOCK_END;
+    }
+    
+    interface SessionsIndexQuery {
+    	
+    	static final String COUNT = "count";
+    	
+    	String [] COLUMNS = {
+    			Sessions.BLOCK_START,
+    			COUNT,
+    	};
+    	
+    	static final int BLOCK_START = 0;
+    	static final int COLUMN_COUNT = 1;
+
+    	static final String ORDER_BY = Sessions.BLOCK_START;
     }
 
 }

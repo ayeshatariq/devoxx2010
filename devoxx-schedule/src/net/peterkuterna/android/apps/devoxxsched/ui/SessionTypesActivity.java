@@ -2,6 +2,7 @@ package net.peterkuterna.android.apps.devoxxsched.ui;
 
 import net.peterkuterna.android.apps.devoxxsched.R;
 import net.peterkuterna.android.apps.devoxxsched.R.id;
+import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.SessionCounts;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Types;
 import net.peterkuterna.android.apps.devoxxsched.util.NotifyingAsyncQueryHandler;
 import net.peterkuterna.android.apps.devoxxsched.util.NotifyingAsyncQueryHandler.AsyncQueryListener;
@@ -76,10 +77,12 @@ public class SessionTypesActivity extends ListActivity implements AsyncQueryList
         final String typeId = cursor.getString(TypesQuery.TYPE_ID);
         final String typeName = cursor.getString(TypesQuery.TYPE_NAME);
         final String typeTitle = "Sessions for '" + typeName + "'";
-        final Uri sessionUri = Types.buildSessionsDirUri(typeId);
+        final Uri sessionUri = Types.buildSessionsDirUri(typeId)
+        	.buildUpon()
+        	.appendQueryParameter(SessionCounts.SESSION_INDEX_EXTRAS, Boolean.TRUE.toString())
+        	.build();
         final Intent intent = new Intent(Intent.ACTION_VIEW, sessionUri);
         intent.putExtra(Intent.EXTRA_TITLE, typeTitle);
-        intent.putExtra(SessionsActivity.EXTRA_FAST_SCROLL, true);
         intent.putExtra(SessionsActivity.EXTRA_FOCUS_CURRENT_NEXT_SESSION, true);
         startActivity(intent);
     }

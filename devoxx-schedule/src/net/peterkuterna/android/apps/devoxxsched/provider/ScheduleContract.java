@@ -653,6 +653,14 @@ public class ScheduleContract {
                 + " COLLATE NOCASE ASC";
     }
 
+    public final static class SessionCounts {
+        public static final String SESSION_INDEX_EXTRAS = "session_index_extras";
+
+        public static final String EXTRA_SESSION_INDEX_WEEKDAYS = "session_index_weekdays";
+
+        public static final String EXTRA_SESSION_INDEX_COUNTS = "session_index_counts";
+    }
+    
     private ScheduleContract() {
     }
     

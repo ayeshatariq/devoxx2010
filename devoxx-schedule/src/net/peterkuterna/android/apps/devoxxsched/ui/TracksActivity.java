@@ -20,6 +20,7 @@
 package net.peterkuterna.android.apps.devoxxsched.ui;
 
 import net.peterkuterna.android.apps.devoxxsched.R;
+import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.SessionCounts;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Tracks;
 import net.peterkuterna.android.apps.devoxxsched.util.NotifyingAsyncQueryHandler;
 import net.peterkuterna.android.apps.devoxxsched.util.NotifyingAsyncQueryHandler.AsyncQueryListener;
@@ -98,11 +99,13 @@ public class TracksActivity extends ListActivity implements AsyncQueryListener {
         final String trackId = cursor.getString(TracksQuery.TRACK_ID);
         final String trackTitle = cursor.getString(TracksQuery.TRACK_NAME);
         final int trackColor = cursor.getInt(TracksQuery.TRACK_COLOR);
-        final Uri sessionUri = Tracks.buildSessionsUri(trackId);
+        final Uri sessionUri = Tracks.buildSessionsUri(trackId)
+        	.buildUpon()
+        	.appendQueryParameter(SessionCounts.SESSION_INDEX_EXTRAS, Boolean.TRUE.toString())
+        	.build();
         final Intent intent = new Intent(Intent.ACTION_VIEW, sessionUri);
         intent.putExtra(Intent.EXTRA_TITLE, trackTitle);
         intent.putExtra(SessionsActivity.EXTRA_TRACK_COLOR, trackColor);
-        intent.putExtra(SessionsActivity.EXTRA_FAST_SCROLL, true);
         intent.putExtra(SessionsActivity.EXTRA_FOCUS_CURRENT_NEXT_SESSION, true);
         startActivity(intent);
     }

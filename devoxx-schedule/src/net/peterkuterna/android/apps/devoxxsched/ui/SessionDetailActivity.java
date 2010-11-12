@@ -102,6 +102,9 @@ public class SessionDetailActivity extends TabActivity implements AsyncQueryList
         mTitle = (TextView) findViewById(R.id.session_title);
         mSubtitle = (TextView) findViewById(R.id.session_subtitle);
         mStarred = (CompoundButton) findViewById(R.id.star_button);
+        
+        findViewById(R.id.header).setVisibility(View.GONE);
+        findViewById(R.id.session_divider).setVisibility(View.GONE);
 
         mStarred.setFocusable(true);
         mStarred.setClickable(true);

@@ -23,15 +23,13 @@ package net.peterkuterna.android.apps.devoxxsched.ui;
 
 import static net.peterkuterna.android.apps.devoxxsched.util.UIUtils.buildStyledSnippet;
 import static net.peterkuterna.android.apps.devoxxsched.util.UIUtils.formatSessionSubtitle;
-
-import java.util.ArrayList;
-
 import net.peterkuterna.android.apps.devoxxsched.R;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Blocks;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Rooms;
+import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.SessionCounts;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Sessions;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Tracks;
-import net.peterkuterna.android.apps.devoxxsched.util.Lists;
+import net.peterkuterna.android.apps.devoxxsched.ui.widget.PinnedHeaderListView;
 import net.peterkuterna.android.apps.devoxxsched.util.NotifyingAsyncQueryHandler;
 import net.peterkuterna.android.apps.devoxxsched.util.NotifyingAsyncQueryHandler.AsyncQueryListener;
 import net.peterkuterna.android.apps.devoxxsched.util.UIUtils;
@@ -39,9 +37,10 @@ import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.database.Cursor;
-import android.database.CursorWrapper;
-import android.database.DataSetObserver;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -50,9 +49,12 @@ import android.provider.BaseColumns;
 import android.text.Spannable;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
+import android.widget.AbsListView.OnScrollListener;
 import android.widget.CheckBox;
 import android.widget.CursorAdapter;
 import android.widget.ListView;
+import android.widget.SectionIndexer;
 import android.widget.TextView;
 
 /**
@@ -67,17 +69,16 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
     public static final String EXTRA_NO_WEEKDAY_HEADER = "net.peterkuterna.android.apps.devoxxsched.extra.NO_WEEKDAY_HEADER";
     public static final String EXTRA_HIHGLIGHT_PARALLEL_STARRED = "net.peterkuterna.android.apps.devoxxsched.extra.HIGHLIGHT_PARALLEL_STARRED";
     public static final String EXTRA_FOCUS_CURRENT_NEXT_SESSION = "net.peterkuterna.android.apps.devoxxsched.extra.FOCUS_CURRENT_NEXT_SESSION";
-    public static final String EXTRA_FAST_SCROLL = "net.peterkuterna.android.apps.devoxxsched.extra.FAST_SCROLL";
 
     private CursorAdapter mAdapter;
 
     private NotifyingAsyncQueryHandler mHandler;
     private Handler mMessageQueueHandler = new Handler();
-    private boolean mNoWeekdayHeader = false;
     private boolean mHighlightParallelStarred = false;
     private boolean mFocusCurrentNextSession = false;
     
     private int mTrackColor= -1;
+    private int mPinnedHeaderBackgroundColor;
     
     private static final String SESSIONS_SORT = Sessions.BLOCK_START + " ASC," + Rooms.NAME + " ASC";
 
@@ -103,7 +104,6 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
         final boolean prefFocusCurrentNextSession = settingsPrefs.getBoolean(getString(R.string.focus_session_during_conference_key), true);
 
         mTrackColor = intent.getIntExtra(EXTRA_TRACK_COLOR, -1);
-        mNoWeekdayHeader = intent.getBooleanExtra(EXTRA_NO_WEEKDAY_HEADER, false);
         mHighlightParallelStarred = intent.getBooleanExtra(EXTRA_HIHGLIGHT_PARALLEL_STARRED, false);
         mFocusCurrentNextSession = prefFocusCurrentNextSession && intent.getBooleanExtra(EXTRA_FOCUS_CURRENT_NEXT_SESSION, false);
                
@@ -115,40 +115,54 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
             mAdapter = new SessionsAdapter(this);
             projection = SessionsQuery.PROJECTION;
             sort = SESSIONS_SORT;
-            getListView().setFastScrollEnabled(intent.getBooleanExtra(EXTRA_FAST_SCROLL, false));
         } else {
            	mAdapter = new SearchAdapter(this);
-           	mNoWeekdayHeader = true;
             projection = SearchQuery.PROJECTION;
             sort = Sessions.DEFAULT_SORT;
         }
 
         setListAdapter(mAdapter);
-
+        
+        setupListView(getIntent());
+        
         // Start background query to load sessions
         mHandler = new NotifyingAsyncQueryHandler(getContentResolver(), this);
         mHandler.startQuery(sessionsUri, projection, sort);
     }
+    
+    private void setupListView(Intent intent) {
+    	if (mAdapter instanceof SessionsAdapter) {
+        	final PinnedHeaderListView list = (PinnedHeaderListView) getListView();
+			mPinnedHeaderBackgroundColor = mTrackColor != - 1 ? 
+					UIUtils.lightenColor(mTrackColor) 
+					: UIUtils.lightenColor(getResources().getColor(R.color.header_background));
+			View pinnedHeader = getLayoutInflater().inflate(R.layout.list_item_session_header, list, false);
+			if (mTrackColor != -1) {
+				UIUtils.setHeaderColor(pinnedHeader, mTrackColor);
+			}
+			list.setPinnedHeaderView(pinnedHeader);
+			list.setDividerHeight(0);
+			list.setOnScrollListener((SessionsAdapter) mAdapter);
+    	}
+    }
 
     /** {@inheritDoc} */
     public void onQueryComplete(int token, Object cookie, Cursor cursor) {
-    	if (mNoWeekdayHeader) {
-    		startManagingCursor(cursor);
-    		mAdapter.changeCursor(cursor);
-    	} else {
-	    	final SessionsCursorWrapper cursorWrapper = new SessionsCursorWrapper(cursor, this);
-	        startManagingCursor(cursorWrapper);
-	        mAdapter.changeCursor(cursorWrapper);
-    	}
+		startManagingCursor(cursor);
+		mAdapter.changeCursor(cursor);
     	
-    	if (mFocusCurrentNextSession) {
+    	if (mAdapter instanceof SessionsAdapter && mFocusCurrentNextSession) {
+    		final SessionsAdapter adapter = (SessionsAdapter) mAdapter;
 	    	getListView().post(new Runnable() {
 				@Override
 				public void run() {
 					final Cursor cursor = mAdapter.getCursor();
 					if (cursor != null && !cursor.isClosed()) {
 						int scrollPos = getScrollPosition(mAdapter.getCursor());
-						if (scrollPos != -1) getListView().setSelection(scrollPos);
+						final boolean firstItemOfDay = (scrollPos == 0) 
+							|| (scrollPos > 0 
+									&& adapter.getSectionForPosition(scrollPos) != adapter.getSectionForPosition(scrollPos - 1)); 
+						if (scrollPos != -1) getListView().setSelectionFromTop(scrollPos, firstItemOfDay ? 0 : 30);
 					}
 				}
 			});
@@ -163,10 +177,6 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
         if (currentTime > UIUtils.CONFERENCE_START_MILLIS &&
         		currentTime < UIUtils.CONFERENCE_END_MILLIS) {
 	    	for (int i = 0; i < cursor.getCount(); i++) {
-	    		if (cursor instanceof SessionsCursorWrapper) {
-	    			final SessionsCursorWrapper cursorWrapper = (SessionsCursorWrapper) cursor;
-	    			if (cursorWrapper.getItemViewType(i) != 0) continue;
-	    		}
 	    		cursor.moveToPosition(i);
 	    		long blockStart = cursor.getLong(SessionsQuery.BLOCK_START);
 	    		long blockEnd = cursor.getLong(SessionsQuery.BLOCK_END);
@@ -176,8 +186,6 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
 	    			break;
 	    		}
 	    	}
-	    	
-	    	if ((cursor instanceof SessionsCursorWrapper) && (scrollPos == 1)) scrollPos = 0;
         }
     	
     	return scrollPos;
@@ -217,303 +225,322 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
         UIUtils.goSearch(this);
     }
 
-    /**
-     * {@link CursorAdapter} that renders a {@link SessionsQuery}.
-     */
-    private class SessionsAdapter extends CursorAdapter {
-        public SessionsAdapter(Context context) {
-            super(context, null);
-        }
+    public static final class SessionItemViews {
+        View headerView;
+        TextView headerTextView;
+        View dividerView;
+        TextView titleView;
+        TextView subtitleView;
+        View trackView;
+        CheckBox starButton;
+    }
+    
+    final static class PinnedHeaderCache {
+        public TextView titleView;
+        public ColorStateList textColor;
+        public Drawable background;
+    }
+    
+    private abstract class BaseAdapter extends CursorAdapter {
 
-        /** {@inheritDoc} */
-        @Override
-        public View newView(Context context, Cursor cursor, ViewGroup parent) {
-        	int cursorInfo = net.peterkuterna.android.apps.devoxxsched.ui.SessionsActivity.SessionsCursorWrapper.CursorInfo.SESSION_TYPE;
-        	if (!mNoWeekdayHeader) {
-        		cursorInfo = cursor.getInt(SessionsCursorWrapper.CURSOR_INFO_COLUMN_INDEX);
-        	}
-        	switch (cursorInfo) {
-        		case net.peterkuterna.android.apps.devoxxsched.ui.SessionsActivity.SessionsCursorWrapper.CursorInfo.DAY_TYPE:
-        			View v = getLayoutInflater().inflate(R.layout.list_item_session_header, parent,false);
-        			if (mTrackColor != -1) {
-        				UIUtils.setHeaderColor(v, mTrackColor);
-        			}
-        			return v;
-        		case net.peterkuterna.android.apps.devoxxsched.ui.SessionsActivity.SessionsCursorWrapper.CursorInfo.SESSION_TYPE:
-        		default:
-        			return getLayoutInflater().inflate(R.layout.list_item_session, parent,false);
-        	}
-        }
+		public BaseAdapter(Context context) {
+			super(context, null, false);
+		}
+    	
+	    protected void findAndCacheViews(View view) {
+	        // Get the views to bind to
+	        SessionItemViews views = new SessionItemViews();
+	        views.headerView = view.findViewById(R.id.header);
+	        views.headerTextView = (TextView) view.findViewById(R.id.header_text);
+	        views.dividerView = view.findViewById(R.id.session_divider);
+	        views.titleView = (TextView) view.findViewById(R.id.session_title);
+	        views.subtitleView = (TextView) view.findViewById(R.id.session_subtitle);
+	        views.starButton = (CheckBox) view.findViewById(R.id.star_button);
+	        views.trackView = view.findViewById(R.id.session_track);
+	        view.setTag(views);
+	    }
 
-        /** {@inheritDoc} */
-        @Override
-        public void bindView(View view, Context context, Cursor cursor) {
-        	int cursorInfo = net.peterkuterna.android.apps.devoxxsched.ui.SessionsActivity.SessionsCursorWrapper.CursorInfo.SESSION_TYPE;
-        	if (!mNoWeekdayHeader) {
-        		cursorInfo = cursor.getInt(SessionsCursorWrapper.CURSOR_INFO_COLUMN_INDEX);
-        	}
-        	switch (cursorInfo) {
-        		case net.peterkuterna.android.apps.devoxxsched.ui.SessionsActivity.SessionsCursorWrapper.CursorInfo.DAY_TYPE:
-                    final TextView headerView = (TextView) view.findViewById(R.id.session_header);
-                    
-                    headerView.setText(cursor.getString(SessionsCursorWrapper.WEEKDAY_COLUMN_INDEX));
-        			break;
-        		case net.peterkuterna.android.apps.devoxxsched.ui.SessionsActivity.SessionsCursorWrapper.CursorInfo.SESSION_TYPE:
-        		default:
-                    final TextView titleView = (TextView) view.findViewById(R.id.session_title);
-                    final TextView subtitleView = (TextView) view.findViewById(R.id.session_subtitle);
-                    final CheckBox starButton = (CheckBox) view.findViewById(R.id.star_button);
-                    if (mTrackColor == -1) {
-                    	view.findViewById(R.id.session_track).setBackgroundColor(cursor.getInt(SessionsQuery.TRACK_COLOR));
-                    } else {
-                    	view.findViewById(R.id.session_track).setVisibility(View.GONE);
-                    }
+    }
+    
+    private final class SessionsAdapter extends BaseAdapter
+	    implements SectionIndexer, OnScrollListener, PinnedHeaderListView.PinnedHeaderAdapter {
 
-                    titleView.setText(cursor.getString(SessionsQuery.TITLE));
-
-                    // Format time block this session occupies
-                    final long blockStart = cursor.getLong(SessionsQuery.BLOCK_START);
-                    final long blockEnd = cursor.getLong(SessionsQuery.BLOCK_END);
-                    final String roomName = cursor.getString(SessionsQuery.ROOM_NAME);
-                    final String subtitle = formatSessionSubtitle(blockStart, blockEnd, roomName, context);
-
-                    subtitleView.setText(subtitle);
-
-                    final boolean starred = cursor.getInt(SessionsQuery.STARRED) != 0;
-                    starButton.setVisibility(starred ? View.VISIBLE : View.INVISIBLE);
-                    starButton.setChecked(starred);
-                    
-                    if (mHighlightParallelStarred) {
-                        final int parallelStarredCount = cursor.getInt(SessionsQuery.STARRED_IN_BLOCK_COUNT);
-                    	if (starred && parallelStarredCount > 1) {
-                        	view.setBackgroundColor(0x20ff0000);
-                    	} else {
-                        	view.setBackgroundColor(0x00000000);
-                    	}
-                    } else {
-                    	view.setBackgroundColor(0x00000000);
-                    }
-                    
-                    // Possibly indicate that the session has occurred in the past.
-                    UIUtils.setSessionTitleColor(blockStart, blockEnd, titleView, subtitleView);
-                    break;
-        	}
-        }
-
+    	private SectionIndexer mIndexer;
+    	private boolean mDisplaySectionHeaders = true;
+	
+		private final Context mContext;
+	
+		public SessionsAdapter(Context context) {
+		    super(context);
+		    
+		    this.mContext = context;
+		}
+	
 		@Override
-		public int getItemViewType(int position) {
-			if (!mNoWeekdayHeader) {
-				SessionsCursorWrapper wrapper = (SessionsCursorWrapper) getCursor();
-				return wrapper.getItemViewType(position);
-			} else {
-				return super.getItemViewType(position);
+		public View getView(int position, View convertView, ViewGroup parent) {
+		    if (!getCursor().moveToPosition(position)) {
+		        throw new IllegalStateException("couldn't move cursor to position " + position);
+		    }
+		
+		    boolean newView;
+		    View v;
+		    if (convertView == null || convertView.getTag() == null) {
+		        newView = true;
+		        v = newView(mContext, getCursor(), parent);
+		    } else {
+		        newView = false;
+		        v = convertView;
+		    }
+		    bindView(v, mContext, getCursor());
+		    bindSectionHeader(v, position, mDisplaySectionHeaders);
+		    return v;
+		}
+		@Override
+		public View newView(Context context, Cursor cursor, ViewGroup parent) {
+			View v = getLayoutInflater().inflate(R.layout.list_item_session, parent,false);
+			findAndCacheViews(v);
+			if (mTrackColor != -1) {
+				View headerView = ((SessionItemViews) v.getTag()).headerView;
+				UIUtils.setHeaderColor(headerView, mTrackColor);
 			}
+			return v;
+		}
+		
+		@Override
+		public void bindView(View view, Context context, Cursor cursor) {
+			SessionItemViews views = (SessionItemViews) view.getTag();
+	        if (mTrackColor == -1) {
+	        	views.trackView.setBackgroundColor(cursor.getInt(SessionsQuery.TRACK_COLOR));
+	        } else {
+	        	views.trackView.setVisibility(View.GONE);
+	        }
+	
+	        views.titleView.setText(cursor.getString(SessionsQuery.TITLE));
+	
+	        // Format time block this session occupies
+	        final long blockStart = cursor.getLong(SessionsQuery.BLOCK_START);
+	        final long blockEnd = cursor.getLong(SessionsQuery.BLOCK_END);
+	        final String roomName = cursor.getString(SessionsQuery.ROOM_NAME);
+	        final String subtitle = formatSessionSubtitle(blockStart, blockEnd, roomName, context);
+	
+	        views.subtitleView.setText(subtitle);
+	
+	        final boolean starred = cursor.getInt(SessionsQuery.STARRED) != 0;
+	        views.starButton.setVisibility(starred ? View.VISIBLE : View.INVISIBLE);
+	        views.starButton.setChecked(starred);
+	        
+	        if (mHighlightParallelStarred) {
+	            final int parallelStarredCount = cursor.getInt(SessionsQuery.STARRED_IN_BLOCK_COUNT);
+	        	if (starred && parallelStarredCount > 1) {
+	            	view.setBackgroundColor(0x20ff0000);
+	        	} else {
+	            	view.setBackgroundColor(0x00000000);
+	        	}
+	        } else {
+	        	view.setBackgroundColor(0x00000000);
+	        }
+	        
+	        // Possibly indicate that the session has occurred in the past.
+	        UIUtils.setSessionTitleColor(blockStart, blockEnd, views.titleView, views.subtitleView);
+		}
+		
+		private void bindSectionHeader(View view, int position, boolean displaySectionHeaders) {
+			SessionItemViews views = (SessionItemViews) view.getTag();
+		    if (!displaySectionHeaders) {
+		    	views.headerView.setVisibility(View.GONE);
+		    	views.dividerView.setVisibility(position == 0 ? View.GONE : View.VISIBLE);
+		    } else {
+		        final int section = getSectionForPosition(position);
+		        if (getPositionForSection(section) == position) {
+		            String title = (String) mIndexer.getSections()[section];
+		            views.headerTextView.setText(title);
+			    	views.headerView.setVisibility(View.VISIBLE);
+			    	views.dividerView.setVisibility(View.GONE);
+		        } else {
+		        	views.headerView.setVisibility(View.GONE);
+			    	views.dividerView.setVisibility(View.VISIBLE);
+		        }
+		
+		        // move the divider for the last item in a section
+		        if (getPositionForSection(section + 1) - 1 == position) {
+			    	views.dividerView.setVisibility(View.GONE);
+		        } else {
+			    	views.dividerView.setVisibility(View.VISIBLE);
+		        }
+		    }
+		}
+	
+		@Override
+		public void changeCursor(Cursor cursor) {
+		    super.changeCursor(cursor);
+	
+		    updateIndexer(cursor);
+		}
+	
+		private void updateIndexer(Cursor cursor) {
+		    if (cursor == null) {
+		        mIndexer = null;
+		        return;
+		    }
+		
+		    Bundle bundle = cursor.getExtras();
+		    if (bundle.containsKey(SessionCounts.EXTRA_SESSION_INDEX_WEEKDAYS)) {
+		        String sections[] =
+		            bundle.getStringArray(SessionCounts.EXTRA_SESSION_INDEX_WEEKDAYS);
+		        int counts[] = bundle.getIntArray(SessionCounts.EXTRA_SESSION_INDEX_COUNTS);
+		        mIndexer = new SessionsSectionIndexer(sections, counts);
+		    } else {
+		        mIndexer = null;
+		    }
+		}
+	
+		public Object [] getSections() {
+		    if (mIndexer == null) {
+		        return new String[] { " " };
+		    } else {
+		        return mIndexer.getSections();
+		    }
+		}
+		
+		public int getPositionForSection(int sectionIndex) {
+		    if (mIndexer == null) {
+		        return -1;
+		    }
+		
+		    return mIndexer.getPositionForSection(sectionIndex);
+		}
+		
+		public int getSectionForPosition(int position) {
+		    if (mIndexer == null) {
+		        return -1;
+		    }
+		
+		    return mIndexer.getSectionForPosition(position);
 		}
 
-		@Override
-		public boolean areAllItemsEnabled() {
-			if (!mNoWeekdayHeader) {
-				return false;
-			} else {
-				return super.areAllItemsEnabled();
-			}
+		public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
+	        int totalItemCount) {
+		    if (view instanceof PinnedHeaderListView) {
+		        ((PinnedHeaderListView) view).configureHeaderView(firstVisibleItem);
+		    }
 		}
-
-		@Override
-		public int getViewTypeCount() {
-			if (!mNoWeekdayHeader) {
-				return 2;
-			} else {
-				return super.getViewTypeCount();
-			}
+	
+		public void onScrollStateChanged(AbsListView view, int scrollState) {
 		}
-
-		@Override
-		public boolean isEnabled(int position) {
-			if (!mNoWeekdayHeader) {
-				SessionsCursorWrapper wrapper = (SessionsCursorWrapper) getCursor();
-				return wrapper.isEnabled(position);
-			} else {
-				return super.isEnabled(position);
-			}
+	
+		/**
+		 * Computes the state of the pinned header.  It can be invisible, fully
+		 * visible or partially pushed up out of the view.
+		 */
+		public int getPinnedHeaderState(int position) {
+			final Cursor cursor = getCursor();
+		    if (mIndexer == null || cursor == null || cursor.getCount() == 0) {
+		        return PINNED_HEADER_GONE;
+		    }
+		
+		    if (position < 0) {
+		        return PINNED_HEADER_GONE;
+		    }
+		
+		    // The header should get pushed up if the top item shown
+		    // is the last item in a section for a particular letter.
+		    int section = getSectionForPosition(position);
+		    int nextSectionPosition = getPositionForSection(section + 1);
+		    if (nextSectionPosition != -1 && position == nextSectionPosition - 1) {
+		        return PINNED_HEADER_PUSHED_UP;
+		    }
+		
+		    return PINNED_HEADER_VISIBLE;
+		}
+	
+		/**
+		 * Configures the pinned header by setting the appropriate text label
+		 * and also adjusting color if necessary.  The color needs to be
+		 * adjusted when the pinned header is being pushed up from the view.
+		 */
+		public void configurePinnedHeader(View header, int position, int alpha) {
+		    PinnedHeaderCache cache = (PinnedHeaderCache) header.getTag();
+	
+		    if (cache == null) {
+		        cache = new PinnedHeaderCache();
+		        cache.titleView = (TextView) header.findViewById(R.id.header_text);
+		        cache.textColor = cache.titleView.getTextColors();
+		        cache.background = header.getBackground();
+		        header.setTag(cache);
+		    }
+		
+		    int section = getSectionForPosition(position);
+		    
+		    String title = (String) mIndexer.getSections()[section];
+		    cache.titleView.setText(title);
+		
+		    if (alpha == 255) {
+		        // Opaque: use the default background, and the original text color
+		        header.setBackgroundDrawable(cache.background);
+		        cache.titleView.setTextColor(cache.textColor);
+		    } else {
+		        // Faded: use a solid color approximation of the background, and
+		        // a translucent text color
+		    	final int diffAlpha = 255 - alpha;
+		    	final int red = Color.red(mPinnedHeaderBackgroundColor);
+		    	final int diffRed = 255 - red;
+		    	final int green = Color.green(mPinnedHeaderBackgroundColor);
+		    	final int diffGreen = 255 - green;
+		    	final int blue = Color.blue(mPinnedHeaderBackgroundColor);
+		    	final int diffBlue = 255 - blue;
+		        header.setBackgroundColor(Color.rgb(
+		        		red + (diffRed * diffAlpha / 255),
+		        		green + (diffGreen * diffAlpha / 255),
+		        		blue + (diffBlue * diffAlpha / 255)));
+		
+		        int textColor = cache.textColor.getDefaultColor();
+		        cache.titleView.setTextColor(Color.argb(alpha,
+		                Color.red(textColor), Color.green(textColor), Color.blue(textColor)));
+		    }
 		}
 
     }
     
     /**
-     * {@link CursorWrapper} to insert weekday headers for a {@link SessionsQuery}.
-     */
-    private class SessionsCursorWrapper extends CursorWrapper {
-    	
-    	private final Context context;
-    	private Cursor cursor;
-    	private ArrayList<CursorInfo> cursorMapping;
-    	private int position = -1;
-    	
-    	public static final int WEEKDAY_COLUMN_INDEX = 98;
-    	public static final int CURSOR_INFO_COLUMN_INDEX = 99;
-    	
-		public SessionsCursorWrapper(Cursor cursor, Context context) {
-			super(cursor);
-			
-			this.context = context;
-			this.cursor = cursor;
-			
-			registerDataSetObserver(new DataSetObserver() {
-
-				@Override
-				public void onChanged() {
-					init();
-				}
-
-				@Override
-				public void onInvalidated() {
-					init();
-				}
-			});
-			
-			init();
-		}
-
-		@Override
-		public int getCount() {
-			return cursorMapping.size();
-		}
-		
-		public boolean isEnabled(int position) {
-			return cursorMapping.get(position).getType() == CursorInfo.SESSION_TYPE;
-		}
-
-		public int getItemViewType(int position) {
-			return cursorMapping.get(position).getType() - 1;
-		}
-
-		@Override
-		public int getInt(int columnIndex) {
-			CursorInfo cursorInfo = cursorMapping.get(position);
-			if (columnIndex == CURSOR_INFO_COLUMN_INDEX) {
-				return cursorInfo.getType();
-			} else if (cursorInfo.getType() == CursorInfo.SESSION_TYPE) {
-				return super.getInt(columnIndex);
-			}
-			return 0;
-		}
-
-		@Override
-		public long getLong(int columnIndex) {
-			CursorInfo cursorInfo = cursorMapping.get(position);
-			if (cursorInfo.getType() == CursorInfo.SESSION_TYPE) {
-				return super.getLong(columnIndex);
-			}
-			return 0;
-		}
-
-		@Override
-		public String getString(int columnIndex) {
-			CursorInfo cursorInfo = cursorMapping.get(position);
-			if (columnIndex == WEEKDAY_COLUMN_INDEX) {
-				return cursorInfo.getWeekday();
-			} else if (cursorInfo.getType() == CursorInfo.SESSION_TYPE) {
-				return super.getString(columnIndex);
-			}
-			return null;
-		}
-
-		@Override
-		public boolean moveToPosition(int position) {
-			if (position < cursorMapping.size()) {
-				this.position = position;
-
-				final CursorInfo cursorInfo = cursorMapping.get(position);
-				switch (cursorInfo.getType()) {
-					case CursorInfo.SESSION_TYPE:
-						return super.moveToPosition(cursorInfo.getCursorPostion());
-					default:
-						return true;
-				}
-			}
-			return false;
-		}
-    	
-		private void init() {
-			if (cursor != null) {
-				cursorMapping = Lists.newArrayList();
-				if (cursor.moveToFirst()) {
-					String prevWeekday = null;
-					do {
-						long blockStart = cursor.getLong(SessionsQuery.BLOCK_START);
-						String weekday = UIUtils.formatWeekdayHeader(blockStart, context);
-						if (!weekday.equals(prevWeekday)) {
-							final CursorInfo cursorInfo = new CursorInfo(CursorInfo.DAY_TYPE, -1, weekday);
-							cursorMapping.add(cursorInfo);
-						}
-						final CursorInfo cursorInfo = new CursorInfo(CursorInfo.SESSION_TYPE, cursor.getPosition(), null);
-						cursorMapping.add(cursorInfo);
-						prevWeekday = weekday;
-					} while (cursor.moveToNext());
-				}
-			}
-		}
-		
-		private class CursorInfo {
-			
-			public static final int SESSION_TYPE = 0x01;
-			public static final int DAY_TYPE = 0x02;
-			
-			private final int type;
-			private final int cursorPostion;
-			private final String weekday;
-			
-			public CursorInfo(int type, int cursorPostion, String weekday) {
-				this.type = type;
-				this.cursorPostion = cursorPostion;
-				this.weekday = weekday;
-			}
-
-			public int getType() {
-				return type;
-			}
-
-			public int getCursorPostion() {
-				return cursorPostion;
-			}
-
-			public String getWeekday() {
-				return weekday;
-			}
-			
-		}
-    }
-
-    /**
      * {@link CursorAdapter} that renders a {@link SearchQuery}.
      */
-    private class SearchAdapter extends CursorAdapter {
-        public SearchAdapter(Context context) {
-            super(context, null);
+    private class SearchAdapter extends BaseAdapter implements PinnedHeaderListView.PinnedHeaderAdapter{
+    
+    	public SearchAdapter(Context context) {
+            super(context);
         }
 
-        /** {@inheritDoc} */
+        @Override
+		public int getPinnedHeaderState(int position) {
+			return 0;
+		}
+
+		@Override
+		public void configurePinnedHeader(View header, int position, int alpha) {
+		}
+
+		/** {@inheritDoc} */
         @Override
         public View newView(Context context, Cursor cursor, ViewGroup parent) {
-			return getLayoutInflater().inflate(R.layout.list_item_session, parent,false);
+			View v = getLayoutInflater().inflate(R.layout.list_item_session, parent,false);
+			findAndCacheViews(v);
+			return v;
         }
 
         /** {@inheritDoc} */
         @Override
         public void bindView(View view, Context context, Cursor cursor) {
-        	view.findViewById(R.id.session_track).setBackgroundColor(cursor.getInt(SearchQuery.TRACK_COLOR));
-
-        	((TextView) view.findViewById(R.id.session_title)).setText(cursor.getString(SearchQuery.TITLE));
-
+        	SessionItemViews views = (SessionItemViews) view.getTag();
+        	views.trackView.setBackgroundColor(cursor.getInt(SearchQuery.TRACK_COLOR));
+        	views.titleView.setText(cursor.getString(SearchQuery.TITLE));
             final String snippet = cursor.getString(SearchQuery.SEARCH_SNIPPET);
             final Spannable styledSnippet = buildStyledSnippet(snippet);
-            ((TextView) view.findViewById(R.id.session_subtitle)).setText(styledSnippet);
-
+            views.subtitleView.setText(styledSnippet);
             final boolean starred = cursor.getInt(SearchQuery.STARRED) != 0;
-            final CheckBox starButton = (CheckBox) view.findViewById(R.id.star_button);
-            starButton.setVisibility(starred ? View.VISIBLE : View.INVISIBLE);
-            starButton.setChecked(starred);
+            views.starButton.setVisibility(starred ? View.VISIBLE : View.INVISIBLE);
+            views.starButton.setChecked(starred);
+            views.dividerView.setVisibility(View.GONE);
+            views.headerView.setVisibility(View.GONE);
         }
     }
 

@@ -3,6 +3,7 @@ package net.peterkuterna.android.apps.devoxxsched.ui;
 import net.peterkuterna.android.apps.devoxxsched.R;
 import net.peterkuterna.android.apps.devoxxsched.R.id;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Rooms;
+import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.SessionCounts;
 import net.peterkuterna.android.apps.devoxxsched.util.NotifyingAsyncQueryHandler;
 import net.peterkuterna.android.apps.devoxxsched.util.NotifyingAsyncQueryHandler.AsyncQueryListener;
 import net.peterkuterna.android.apps.devoxxsched.util.UIUtils;
@@ -76,10 +77,12 @@ public class RoomsActivity extends ListActivity implements AsyncQueryListener {
         final String roomId = cursor.getString(RoomsQuery.ROOM_ID);
         final String roomName = cursor.getString(RoomsQuery.ROOM_NAME);
         final String roomTitle = "Sessions for '" + roomName + "'";
-        final Uri sessionUri = Rooms.buildSessionsDirUri(roomId);
+        final Uri sessionUri = Rooms.buildSessionsDirUri(roomId)
+        	.buildUpon()
+        	.appendQueryParameter(SessionCounts.SESSION_INDEX_EXTRAS, Boolean.TRUE.toString())
+        	.build();
         final Intent intent = new Intent(Intent.ACTION_VIEW, sessionUri);
         intent.putExtra(Intent.EXTRA_TITLE, roomTitle);
-        intent.putExtra(SessionsActivity.EXTRA_FAST_SCROLL, true);
         intent.putExtra(SessionsActivity.EXTRA_FOCUS_CURRENT_NEXT_SESSION, true);
         startActivity(intent);
     }
