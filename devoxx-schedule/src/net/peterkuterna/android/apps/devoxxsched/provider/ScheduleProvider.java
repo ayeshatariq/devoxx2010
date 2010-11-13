@@ -73,6 +73,7 @@ import android.util.Log;
 public class ScheduleProvider extends ContentProvider {
 
     private static final String TAG = "ScheduleProvider";
+    
     private static final boolean LOGV = Log.isLoggable(TAG, Log.VERBOSE);
     
     private static final int DAY_FLAGS = DateUtils.FORMAT_SHOW_WEEKDAY;
@@ -306,9 +307,10 @@ public class ScheduleProvider extends ContentProvider {
                 // Most cases are handled with simple SelectionBuilder
                 final SelectionBuilder builder = buildExpandedSelection(uri, match);
                 Cursor cursor = builder.where(selection, selectionArgs).query(db, projection, sortOrder);
-                if (readBooleanQueryParameter(uri, SessionCounts.SESSION_INDEX_EXTRAS, false)) {
-                	cursor = bundleSessionCountExtras(cursor, db, builder, selection, selectionArgs, sortOrder);
-                }
+                // TODO: change the SessionsAdapter to use getExtras on the Cursor to get the weekdays
+//                if (UriUtils.readBooleanQueryParameter(uri, SessionCounts.SESSION_INDEX_EXTRAS, false)) {
+//                	cursor = bundleSessionCountExtras(cursor, db, builder, selection, selectionArgs, sortOrder);
+//                }
                 return cursor;
             }
             case NOTES_EXPORT: {
@@ -998,7 +1000,7 @@ public class ScheduleProvider extends ContentProvider {
             bundle.putStringArray(SessionCounts.EXTRA_SESSION_INDEX_WEEKDAYS, weekdays);
             bundle.putIntArray(SessionCounts.EXTRA_SESSION_INDEX_COUNTS, counts);
             return new CursorWrapper(cursor) {
-                @Override
+				@Override
                 public Bundle getExtras() {
                     return bundle;
                 }
@@ -1006,31 +1008,6 @@ public class ScheduleProvider extends ContentProvider {
         } finally {
             indexCursor.close();
         }
-    }
-
-    static boolean readBooleanQueryParameter(Uri uri, String parameter, boolean defaultValue) {
-        // Manually parse the query, which is much faster than calling uri.getQueryParameter
-        String query = uri.getEncodedQuery();
-        if (query == null) {
-            return defaultValue;
-        }
-
-        int index = query.indexOf(parameter);
-        if (index == -1) {
-            return defaultValue;
-        }
-
-        index += parameter.length();
-
-        return !matchQueryParameter(query, index, "=0", false)
-                && !matchQueryParameter(query, index, "=false", true);
-    }
-
-    private static boolean matchQueryParameter(String query, int index, String value,
-            boolean ignoreCase) {
-        int length = value.length();
-        return query.regionMatches(ignoreCase, index, value, 0, length)
-                && (query.length() == index + length || query.charAt(index + length) == '&');
     }
 
     private interface Subquery {

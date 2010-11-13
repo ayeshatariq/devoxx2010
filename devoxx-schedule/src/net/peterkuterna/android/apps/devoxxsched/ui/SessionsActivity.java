@@ -23,6 +23,9 @@ package net.peterkuterna.android.apps.devoxxsched.ui;
 
 import static net.peterkuterna.android.apps.devoxxsched.util.UIUtils.buildStyledSnippet;
 import static net.peterkuterna.android.apps.devoxxsched.util.UIUtils.formatSessionSubtitle;
+
+import java.util.ArrayList;
+
 import net.peterkuterna.android.apps.devoxxsched.R;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Blocks;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Rooms;
@@ -30,7 +33,9 @@ import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Sessi
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Sessions;
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Tracks;
 import net.peterkuterna.android.apps.devoxxsched.ui.widget.PinnedHeaderListView;
+import net.peterkuterna.android.apps.devoxxsched.util.Lists;
 import net.peterkuterna.android.apps.devoxxsched.util.NotifyingAsyncQueryHandler;
+import net.peterkuterna.android.apps.devoxxsched.util.UriUtils;
 import net.peterkuterna.android.apps.devoxxsched.util.NotifyingAsyncQueryHandler.AsyncQueryListener;
 import net.peterkuterna.android.apps.devoxxsched.util.UIUtils;
 import android.app.ListActivity;
@@ -47,6 +52,7 @@ import android.os.Handler;
 import android.os.SystemClock;
 import android.provider.BaseColumns;
 import android.text.Spannable;
+import android.text.format.DateUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
@@ -57,10 +63,6 @@ import android.widget.ListView;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
 
-/**
- * {@link ListActivity} that displays a set of {@link Sessions}, as requested
- * through {@link Intent#getData()}.
- */
 public class SessionsActivity extends ListActivity implements AsyncQueryListener {
 
     private static final String TAG = "SessionsActivity";
@@ -70,12 +72,16 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
     public static final String EXTRA_HIHGLIGHT_PARALLEL_STARRED = "net.peterkuterna.android.apps.devoxxsched.extra.HIGHLIGHT_PARALLEL_STARRED";
     public static final String EXTRA_FOCUS_CURRENT_NEXT_SESSION = "net.peterkuterna.android.apps.devoxxsched.extra.FOCUS_CURRENT_NEXT_SESSION";
 
+    private static final int DAY_FLAGS = DateUtils.FORMAT_SHOW_WEEKDAY;
+
     private CursorAdapter mAdapter;
 
     private NotifyingAsyncQueryHandler mHandler;
     private Handler mMessageQueueHandler = new Handler();
     private boolean mHighlightParallelStarred = false;
     private boolean mFocusCurrentNextSession = false;
+    private boolean mGrayOutSessions = true;
+    private boolean mShowWeekdays = false;
     
     private int mTrackColor= -1;
     private int mPinnedHeaderBackgroundColor;
@@ -85,7 +91,7 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        
         if (!getIntent().hasCategory(Intent.CATEGORY_TAB)) {
             setContentView(R.layout.activity_sessions);
 
@@ -106,6 +112,8 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
         mTrackColor = intent.getIntExtra(EXTRA_TRACK_COLOR, -1);
         mHighlightParallelStarred = intent.getBooleanExtra(EXTRA_HIHGLIGHT_PARALLEL_STARRED, false);
         mFocusCurrentNextSession = prefFocusCurrentNextSession && intent.getBooleanExtra(EXTRA_FOCUS_CURRENT_NEXT_SESSION, false);
+        mGrayOutSessions = settingsPrefs.getBoolean(getString(R.string.gray_out_passed_sessions_key), true);
+        mShowWeekdays = UriUtils.readBooleanQueryParameter(sessionsUri, SessionCounts.SESSION_INDEX_EXTRAS, false);
                
         if (mTrackColor != -1) UIUtils.setTitleBarColor(findViewById(R.id.title_container), mTrackColor);
 
@@ -129,13 +137,13 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
         mHandler = new NotifyingAsyncQueryHandler(getContentResolver(), this);
         mHandler.startQuery(sessionsUri, projection, sort);
     }
-    
-    private void setupListView(Intent intent) {
+
+	private void setupListView(Intent intent) {
     	if (mAdapter instanceof SessionsAdapter) {
         	final PinnedHeaderListView list = (PinnedHeaderListView) getListView();
 			mPinnedHeaderBackgroundColor = mTrackColor != - 1 ? 
 					UIUtils.lightenColor(mTrackColor) 
-					: UIUtils.lightenColor(getResources().getColor(R.color.header_background));
+					: getResources().getColor(R.color.header_background);
 			View pinnedHeader = getLayoutInflater().inflate(R.layout.list_item_session_header, list, false);
 			if (mTrackColor != -1) {
 				UIUtils.setHeaderColor(pinnedHeader, mTrackColor);
@@ -244,7 +252,7 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
     private abstract class BaseAdapter extends CursorAdapter {
 
 		public BaseAdapter(Context context) {
-			super(context, null, false);
+			super(context, null, true);
 		}
     	
 	    protected void findAndCacheViews(View view) {
@@ -277,6 +285,11 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
 		}
 	
 		@Override
+		protected void onContentChanged() {
+			super.onContentChanged();
+		}
+
+		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 		    if (!getCursor().moveToPosition(position)) {
 		        throw new IllegalStateException("couldn't move cursor to position " + position);
@@ -295,6 +308,7 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
 		    bindSectionHeader(v, position, mDisplaySectionHeaders);
 		    return v;
 		}
+		
 		@Override
 		public View newView(Context context, Cursor cursor, ViewGroup parent) {
 			View v = getLayoutInflater().inflate(R.layout.list_item_session, parent,false);
@@ -341,7 +355,9 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
 	        }
 	        
 	        // Possibly indicate that the session has occurred in the past.
-	        UIUtils.setSessionTitleColor(blockStart, blockEnd, views.titleView, views.subtitleView);
+	        if (mGrayOutSessions) {
+	        	UIUtils.setSessionTitleColor(blockStart, blockEnd, views.titleView, views.subtitleView);
+	        }
 		}
 		
 		private void bindSectionHeader(View view, int position, boolean displaySectionHeaders) {
@@ -371,27 +387,66 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
 		}
 	
 		@Override
-		public void changeCursor(Cursor cursor) {
-		    super.changeCursor(cursor);
-	
-		    updateIndexer(cursor);
+		public void notifyDataSetChanged() {
+			if (mShowWeekdays) {
+				final Cursor cursor = getCursor();
+				
+				final ArrayList<String> tmpWeekdays = Lists.newArrayList();
+				final ArrayList<Integer> tmpCounts = Lists.newArrayList();
+				
+				String currentWeekday = null;
+				int count = 0;
+				if (cursor != null && !cursor.isClosed()) {
+					cursor.moveToPosition(-1);
+					while (cursor.moveToNext()) {
+		                long millis = cursor.getLong(SessionsQuery.BLOCK_START);
+		                String weekday = DateUtils.formatDateTime(mContext, millis, DAY_FLAGS);
+		                if (!weekday.equals(currentWeekday)) {
+		                	if (count > 0) {
+		                		tmpWeekdays.add(currentWeekday);
+		                		tmpCounts.add(count);
+		                	}
+		                	count = 1;
+		                	currentWeekday = weekday;
+		                } else {
+		                	count++;
+		                }
+					}
+	            	if (count > 0) {
+	            		tmpWeekdays.add(currentWeekday);
+	            		tmpCounts.add(count);
+	            	}
+	            	
+	            	String[] weekdays = new String[tmpWeekdays.size()];
+	            	int[] counts = new int[tmpWeekdays.size()];
+	            	for (int i = 0; i < tmpWeekdays.size(); i++) {
+	            		weekdays[i] = tmpWeekdays.get(i);
+	            		counts[i] = tmpCounts.get(i);
+	            	}
+	            	
+	            	updateIndexer(weekdays, counts);
+				} else {
+					updateIndexer(null, null);
+				}
+			}
+
+			super.notifyDataSetChanged();
 		}
-	
-		private void updateIndexer(Cursor cursor) {
-		    if (cursor == null) {
-		        mIndexer = null;
-		        return;
-		    }
-		
-		    Bundle bundle = cursor.getExtras();
-		    if (bundle.containsKey(SessionCounts.EXTRA_SESSION_INDEX_WEEKDAYS)) {
-		        String sections[] =
-		            bundle.getStringArray(SessionCounts.EXTRA_SESSION_INDEX_WEEKDAYS);
-		        int counts[] = bundle.getIntArray(SessionCounts.EXTRA_SESSION_INDEX_COUNTS);
-		        mIndexer = new SessionsSectionIndexer(sections, counts);
-		    } else {
-		        mIndexer = null;
-		    }
+
+		@Override
+		public void notifyDataSetInvalidated() {
+			updateIndexer(null, null);
+
+			super.notifyDataSetInvalidated();
+		}
+
+		private void updateIndexer(String[] sections, int[] counts) {
+			if (sections == null || counts == null) {
+				mIndexer = null;
+				return;
+			}
+			
+			mIndexer = new SessionsSectionIndexer(sections, counts);
 		}
 	
 		public Object [] getSections() {

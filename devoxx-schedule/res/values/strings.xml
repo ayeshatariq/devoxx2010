@@ -67,6 +67,8 @@
 	<string name="settings_notify_changed_starred_sessions">Changed starred</string>
 	<string name="settings_visualize_parallel_starred_sessions">Parallel starred</string>
 	<string name="settings_visualize_parallel_starred_sessions_summary">Highlight starred sessions that occur at the same time in the starred session overview.</string>
+	<string name="gray_out_passed_sessions">Gray out sessions</string>
+	<string name="gray_out_passed_sessions_summary">Gray out sessions that occur in the past.</string>
 	<string name="settings_focus_session_during_conference">Focus session</string>
 	<string name="settings_focus_session_during_conference_summary">Set list focus to the current or next session during the conference.</string>
 
