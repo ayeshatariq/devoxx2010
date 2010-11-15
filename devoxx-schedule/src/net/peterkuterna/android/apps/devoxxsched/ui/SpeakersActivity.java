@@ -142,10 +142,30 @@ public class SpeakersActivity extends ListActivity implements AsyncQueryListener
         public Drawable background;
     }
     
+    private abstract class BaseAdapter extends CursorAdapter {
+
+		public BaseAdapter(Context context) {
+			super(context, null, true);
+		}
+    	
+	    protected void findAndCacheViews(View view) {
+	        // Get the views to bind to
+	        SpeakerItemViews views = new SpeakerItemViews();
+	        views.headerView = view.findViewById(R.id.header);
+	        views.headerTextView = (TextView) view.findViewById(R.id.header_text);
+	        views.dividerView = view.findViewById(R.id.session_divider);
+	        views.nameView = (TextView) view.findViewById(R.id.speaker_name);
+	        views.companyView = (TextView) view.findViewById(R.id.speaker_company);
+	        views.starButton = (CheckBox) view.findViewById(R.id.star_button);
+	        view.setTag(views);
+	    }
+	    
+    }
+    
     /**
      * {@link CursorAdapter} that renders a {@link SpeakersQuery}.
      */
-    private class SpeakersAdapter extends CursorAdapter 
+    private class SpeakersAdapter extends BaseAdapter 
     	implements SectionIndexer, OnScrollListener, PinnedHeaderListView.PinnedHeaderAdapter {
     	
     	private AlphabetIndexer mIndexer;
@@ -154,7 +174,7 @@ public class SpeakersActivity extends ListActivity implements AsyncQueryListener
 		private final Context mContext;
 
         public SpeakersAdapter(Context context) {
-            super(context, null);
+            super(context);
             
             this.mContext = context;
         }
@@ -190,16 +210,12 @@ public class SpeakersActivity extends ListActivity implements AsyncQueryListener
         /** {@inheritDoc} */
         @Override
         public void bindView(View view, Context context, Cursor cursor) {
-            final TextView nameView = (TextView) view.findViewById(R.id.speaker_name);
-            final TextView companyView = (TextView) view.findViewById(R.id.speaker_company);
-            final CheckBox starButton = (CheckBox) view.findViewById(R.id.star_button);
-
-            nameView.setText(cursor.getString(SpeakersQuery.LAST_NAME) + " " + cursor.getString(SpeakersQuery.FIRST_NAME));
-            companyView.setText(cursor.getString(SpeakersQuery.COMPANY));
-
+        	SpeakerItemViews views = (SpeakerItemViews) view.getTag();
+            views.nameView.setText(cursor.getString(SpeakersQuery.LAST_NAME) + " " + cursor.getString(SpeakersQuery.FIRST_NAME));
+            views.companyView.setText(cursor.getString(SpeakersQuery.COMPANY));
             final boolean starred = cursor.getInt(SpeakersQuery.CONTAINS_STARRED) != 0;
-            starButton.setVisibility(starred ? View.VISIBLE : View.INVISIBLE);
-            starButton.setChecked(starred);
+            views.starButton.setVisibility(starred ? View.VISIBLE : View.INVISIBLE);
+            views.starButton.setChecked(starred);
         }
 
 		private void bindSectionHeader(View view, int position, boolean displaySectionHeaders) {
@@ -228,18 +244,6 @@ public class SpeakersActivity extends ListActivity implements AsyncQueryListener
 		    }
 		}
 	
-	    private void findAndCacheViews(View view) {
-	        // Get the views to bind to
-	        SpeakerItemViews views = new SpeakerItemViews();
-	        views.headerView = view.findViewById(R.id.header);
-	        views.headerTextView = (TextView) view.findViewById(R.id.header_text);
-	        views.dividerView = view.findViewById(R.id.session_divider);
-	        views.nameView = (TextView) view.findViewById(R.id.speaker_name);
-	        views.companyView = (TextView) view.findViewById(R.id.speaker_company);
-	        views.starButton = (CheckBox) view.findViewById(R.id.star_button);
-	        view.setTag(views);
-	    }
-	    
 		@Override
 		public void changeCursor(Cursor cursor) {
 			super.changeCursor(cursor);
@@ -373,36 +377,43 @@ public class SpeakersActivity extends ListActivity implements AsyncQueryListener
     /**
      * {@link CursorAdapter} that renders a {@link SearchQuery}.
      */
-    private class SearchAdapter extends CursorAdapter {
+    private class SearchAdapter extends BaseAdapter implements PinnedHeaderListView.PinnedHeaderAdapter {
         public SearchAdapter(Context context) {
-            super(context, null);
+            super(context);
         }
+
+        @Override
+		public int getPinnedHeaderState(int position) {
+			return 0;
+		}
+
+		@Override
+		public void configurePinnedHeader(View header, int position, int alpha) {
+		}
 
         /** {@inheritDoc} */
         @Override
         public View newView(Context context, Cursor cursor, ViewGroup parent) {
-            return getLayoutInflater().inflate(R.layout.list_item_speaker, parent, false);
+            View v = getLayoutInflater().inflate(R.layout.list_item_speaker, parent, false);
+			findAndCacheViews(v);
+			return v;
         }
 
         /** {@inheritDoc} */
         @Override
         public void bindView(View view, Context context, Cursor cursor) {
-            final TextView nameView = (TextView) view.findViewById(R.id.speaker_name);
-            final TextView companyView = (TextView) view.findViewById(R.id.speaker_company);
-            final CheckBox starButton = (CheckBox) view.findViewById(R.id.star_button);
-
+        	SpeakerItemViews views = (SpeakerItemViews) view.getTag();
             final String name = cursor.getString(SearchQuery.LAST_NAME) + " " + cursor.getString(SearchQuery.FIRST_NAME);
-            nameView.setText(name);
-
+            views.nameView.setText(name);
             final String snippet = cursor.getString(SearchQuery.SEARCH_SNIPPET);
             final Spannable styledSnippet = buildStyledSnippet(snippet);
-            companyView.setText(styledSnippet);
-
+            views.companyView.setText(styledSnippet);
             final boolean starred = cursor.getInt(SearchQuery.CONTAINS_STARRED) != 0;
-            starButton.setVisibility(starred ? View.VISIBLE : View.INVISIBLE);
-            starButton.setChecked(starred);
+            views.starButton.setVisibility(starred ? View.VISIBLE : View.INVISIBLE);
+            views.starButton.setChecked(starred);
+            views.dividerView.setVisibility(View.GONE);
+            views.headerView.setVisibility(View.GONE);
         }
-
     
     }
 

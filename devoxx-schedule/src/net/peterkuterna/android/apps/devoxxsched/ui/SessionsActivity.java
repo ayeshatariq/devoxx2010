@@ -561,7 +561,7 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
     /**
      * {@link CursorAdapter} that renders a {@link SearchQuery}.
      */
-    private class SearchAdapter extends BaseAdapter implements PinnedHeaderListView.PinnedHeaderAdapter{
+    private class SearchAdapter extends BaseAdapter implements PinnedHeaderListView.PinnedHeaderAdapter {
     
     	public SearchAdapter(Context context) {
             super(context);
