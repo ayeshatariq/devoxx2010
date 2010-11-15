@@ -546,7 +546,7 @@ public class ScheduleContract {
         public static final String SEARCH_SNIPPET = "search_snippet";
 
         /** Default "ORDER BY" clause. */
-        public static final String DEFAULT_SORT = SpeakersColumns.LAST_NAME + " ASC, " + SpeakersColumns.FIRST_NAME + " ASC";
+        public static final String DEFAULT_SORT = "UPPER(" + SpeakersColumns.LAST_NAME + ") ASC, " + SpeakersColumns.FIRST_NAME + " ASC";
 
         /** Build {@link Uri} for requested {@link #SPEAKER_ID}. */
         public static Uri buildSpeakerUri(String speakerId) {

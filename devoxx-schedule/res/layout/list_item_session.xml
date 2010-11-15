@@ -20,7 +20,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
     
-    <include layout="@layout/list_item_session_header" />
+    <include layout="@layout/list_item_header" />
     
     <LinearLayout
     	android:layout_width="fill_parent"

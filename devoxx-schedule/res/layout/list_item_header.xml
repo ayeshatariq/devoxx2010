@@ -29,6 +29,6 @@
         android:layout_centerVertical="true"
         android:layout_alignParentLeft="true"
         android:textStyle="bold"
-        style="@style/SessionWeekday" />
+        style="@style/ListItemHeaderText" />
          
 </RelativeLayout> 

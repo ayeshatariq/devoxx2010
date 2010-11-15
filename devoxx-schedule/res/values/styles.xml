@@ -108,16 +108,6 @@
         <item name="android:ellipsize">end</item>
     </style>
 
-    <style name="SessionWeekday">
-        <item name="android:textStyle">bold</item>
-        <item name="android:paddingLeft">10dip</item>
-        <item name="android:paddingRight">10dip</item>
-        <item name="android:paddingTop">2dip</item>
-        <item name="android:paddingBottom">2dip</item>
-        <item name="android:textSize">@dimen/text_size_medium</item>
-        <item name="android:textColor">@color/header_text</item>
-    </style>
-
     <style name="SessionTitle">
         <item name="android:textStyle">bold</item>
         <item name="android:textSize">@dimen/text_size_medium</item>
@@ -156,6 +146,16 @@
 
     <style name="ListItemHeader">
         <item name="android:background">@color/header_background</item>
+    </style>
+
+    <style name="ListItemHeaderText">
+        <item name="android:textStyle">bold</item>
+        <item name="android:paddingLeft">10dip</item>
+        <item name="android:paddingRight">10dip</item>
+        <item name="android:paddingTop">2dip</item>
+        <item name="android:paddingBottom">2dip</item>
+        <item name="android:textSize">@dimen/text_size_medium</item>
+        <item name="android:textColor">@color/header_text</item>
     </style>
 
     <style name="TextHeader">

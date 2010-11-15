@@ -35,9 +35,9 @@ import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Track
 import net.peterkuterna.android.apps.devoxxsched.ui.widget.PinnedHeaderListView;
 import net.peterkuterna.android.apps.devoxxsched.util.Lists;
 import net.peterkuterna.android.apps.devoxxsched.util.NotifyingAsyncQueryHandler;
-import net.peterkuterna.android.apps.devoxxsched.util.UriUtils;
 import net.peterkuterna.android.apps.devoxxsched.util.NotifyingAsyncQueryHandler.AsyncQueryListener;
 import net.peterkuterna.android.apps.devoxxsched.util.UIUtils;
+import net.peterkuterna.android.apps.devoxxsched.util.UriUtils;
 import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
@@ -145,7 +145,7 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
 			mPinnedHeaderBackgroundColor = mTrackColor != - 1 ? 
 					UIUtils.lightenColor(mTrackColor) 
 					: getResources().getColor(R.color.header_background);
-			View pinnedHeader = getLayoutInflater().inflate(R.layout.list_item_session_header, list, false);
+			View pinnedHeader = getLayoutInflater().inflate(R.layout.list_item_header, list, false);
 			if (mTrackColor != -1) {
 				UIUtils.setHeaderColor(pinnedHeader, mTrackColor);
 			}
@@ -289,11 +289,6 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
 		    this.mContext = context;
 		}
 	
-		@Override
-		protected void onContentChanged() {
-			super.onContentChanged();
-		}
-
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 		    if (!getCursor().moveToPosition(position)) {
@@ -457,9 +452,9 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
 		public Object [] getSections() {
 		    if (mIndexer == null) {
 		        return new String[] { " " };
-		    } else {
-		        return mIndexer.getSections();
 		    }
+		    
+		    return mIndexer.getSections();
 		}
 		
 		public int getPositionForSection(int sectionIndex) {
@@ -531,31 +526,33 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
 		
 		    int section = getSectionForPosition(position);
 		    
-		    String title = (String) mIndexer.getSections()[section];
-		    cache.titleView.setText(title);
-		
-		    if (alpha == 255) {
-		        // Opaque: use the default background, and the original text color
-		        header.setBackgroundDrawable(cache.background);
-		        cache.titleView.setTextColor(cache.textColor);
-		    } else {
-		        // Faded: use a solid color approximation of the background, and
-		        // a translucent text color
-		    	final int diffAlpha = 255 - alpha;
-		    	final int red = Color.red(mPinnedHeaderBackgroundColor);
-		    	final int diffRed = 255 - red;
-		    	final int green = Color.green(mPinnedHeaderBackgroundColor);
-		    	final int diffGreen = 255 - green;
-		    	final int blue = Color.blue(mPinnedHeaderBackgroundColor);
-		    	final int diffBlue = 255 - blue;
-		        header.setBackgroundColor(Color.rgb(
-		        		red + (diffRed * diffAlpha / 255),
-		        		green + (diffGreen * diffAlpha / 255),
-		        		blue + (diffBlue * diffAlpha / 255)));
-		
-		        int textColor = cache.textColor.getDefaultColor();
-		        cache.titleView.setTextColor(Color.argb(alpha,
-		                Color.red(textColor), Color.green(textColor), Color.blue(textColor)));
+		    if (section != -1) {
+			    String title = (String) mIndexer.getSections()[section];
+			    cache.titleView.setText(title);
+			
+			    if (alpha == 255) {
+			        // Opaque: use the default background, and the original text color
+			        header.setBackgroundDrawable(cache.background);
+			        cache.titleView.setTextColor(cache.textColor);
+			    } else {
+			        // Faded: use a solid color approximation of the background, and
+			        // a translucent text color
+			    	final int diffAlpha = 255 - alpha;
+			    	final int red = Color.red(mPinnedHeaderBackgroundColor);
+			    	final int diffRed = 255 - red;
+			    	final int green = Color.green(mPinnedHeaderBackgroundColor);
+			    	final int diffGreen = 255 - green;
+			    	final int blue = Color.blue(mPinnedHeaderBackgroundColor);
+			    	final int diffBlue = 255 - blue;
+			        header.setBackgroundColor(Color.rgb(
+			        		red + (diffRed * diffAlpha / 255),
+			        		green + (diffGreen * diffAlpha / 255),
+			        		blue + (diffBlue * diffAlpha / 255)));
+			
+			        int textColor = cache.textColor.getDefaultColor();
+			        cache.titleView.setTextColor(Color.argb(alpha,
+			                Color.red(textColor), Color.green(textColor), Color.blue(textColor)));
+			    }
 		    }
 		}
 
