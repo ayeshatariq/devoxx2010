@@ -53,6 +53,7 @@ import android.os.SystemClock;
 import android.provider.BaseColumns;
 import android.text.Spannable;
 import android.text.format.DateUtils;
+import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
@@ -167,10 +168,14 @@ public class SessionsActivity extends ListActivity implements AsyncQueryListener
 					final Cursor cursor = mAdapter.getCursor();
 					if (cursor != null && !cursor.isClosed()) {
 						int scrollPos = getScrollPosition(mAdapter.getCursor());
+						final int height = (int) TypedValue.applyDimension(
+								TypedValue.COMPLEX_UNIT_DIP, 
+								30.0f, 
+								getResources().getDisplayMetrics());
 						final boolean firstItemOfDay = (scrollPos == 0) 
 							|| (scrollPos > 0 
 									&& adapter.getSectionForPosition(scrollPos) != adapter.getSectionForPosition(scrollPos - 1)); 
-						if (scrollPos != -1) getListView().setSelectionFromTop(scrollPos, firstItemOfDay ? 0 : 30);
+						if (scrollPos != -1) getListView().setSelectionFromTop(scrollPos, firstItemOfDay ? 0 : height);
 					}
 				}
 			});
