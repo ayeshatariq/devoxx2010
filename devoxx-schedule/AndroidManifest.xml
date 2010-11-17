@@ -171,7 +171,8 @@
 			</intent-filter>
 		</activity>
 
-		<activity android:name=".ui.StarredActivity" android:theme="@style/Theme.DevoxxSched"
+		<activity android:name=".ui.StarredActivity" 
+			android:theme="@style/Theme.DevoxxSchedIndexer"
 			android:label="@string/title_starred" />
 
 		<activity android:name=".ui.MapActivity" 
