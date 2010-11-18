@@ -90,12 +90,13 @@ public class ScheduleProvider extends ContentProvider {
     private static final int SESSIONS_SEARCH = 105;
     private static final int SESSIONS_AT = 106;
     private static final int SESSIONS_PARALLEL = 107;
-    private static final int SESSIONS_ID = 108;
-    private static final int SESSIONS_ID_SPEAKERS = 109;
-    private static final int SESSIONS_ID_SPEAKERS_ID = 110;
-    private static final int SESSIONS_ID_NOTES = 111;
-    private static final int SESSIONS_ID_TAGS = 112;
-    private static final int SESSIONS_ID_TAGS_ID = 113;
+    private static final int SESSIONS_NEXT = 108;
+    private static final int SESSIONS_ID = 109;
+    private static final int SESSIONS_ID_SPEAKERS = 110;
+    private static final int SESSIONS_ID_SPEAKERS_ID = 111;
+    private static final int SESSIONS_ID_NOTES = 112;
+    private static final int SESSIONS_ID_TAGS = 113;
+    private static final int SESSIONS_ID_TAGS_ID = 114;
 
     private static final int SPEAKERS = 200;
     private static final int SPEAKERS_STARRED = 201;
@@ -152,6 +153,7 @@ public class ScheduleProvider extends ContentProvider {
         matcher.addURI(authority, "sessions/search/*", SESSIONS_SEARCH);
         matcher.addURI(authority, "sessions/at/*", SESSIONS_AT);
         matcher.addURI(authority, "sessions/parallel/*", SESSIONS_PARALLEL);
+        matcher.addURI(authority, "sessions/next/*", SESSIONS_NEXT);
         matcher.addURI(authority, "sessions/*", SESSIONS_ID);
         matcher.addURI(authority, "sessions/*/speakers", SESSIONS_ID_SPEAKERS);
         matcher.addURI(authority, "sessions/*/speakers/*", SESSIONS_ID_SPEAKERS_ID);
@@ -226,6 +228,8 @@ public class ScheduleProvider extends ContentProvider {
             case SESSIONS_AT:
                 return Sessions.CONTENT_TYPE;
             case SESSIONS_PARALLEL:
+                return Sessions.CONTENT_TYPE;
+            case SESSIONS_NEXT:
                 return Sessions.CONTENT_TYPE;
             case SESSIONS_ID:
                 return Sessions.CONTENT_ITEM_TYPE;
@@ -704,6 +708,18 @@ public class ScheduleProvider extends ContentProvider {
                         .where(WhereClause.SESSIONS_PARALLEL, sessionId, sessionId)
                         .where(Sessions.SESSION_ID + "<>?", sessionId);
             }
+            case SESSIONS_NEXT: {
+                final List<String> segments = uri.getPathSegments();
+                final String time = segments.get(2);
+                return builder.table(Tables.SESSIONS_JOIN_BLOCKS_ROOMS_TRACKS)
+                        .mapToTable(Sessions._ID, Tables.SESSIONS)
+                        .mapToTable(Sessions.BLOCK_ID, Tables.SESSIONS)
+                        .mapToTable(Sessions.ROOM_ID, Tables.SESSIONS)
+                		.mapToTable(Sessions.TRACK_ID, Tables.SESSIONS)
+                        .map(Sessions.STARRED_IN_BLOCK_COUNT, Subquery.BLOCK_STARRED_SESSIONS_COUNT)
+                		.mapToTable(Tracks.TRACK_COLOR, Tables.TRACKS)
+                        .where(WhereClause.SESSIONS_NEXT, time);
+            }
             case SESSIONS_ID: {
                 final String sessionId = Sessions.getSessionId(uri);
                 return builder.table(Tables.SESSIONS_JOIN_BLOCKS_ROOMS_TRACKS)
@@ -1067,6 +1083,12 @@ public class ScheduleProvider extends ContentProvider {
     			+ Tables.BLOCKS + "." + Blocks.BLOCK_ID + "=" 
     			+ Tables.SESSIONS + "." + Sessions.BLOCK_ID + " WHERE "
     			+ Tables.SESSIONS + "." + Sessions.SESSION_ID + " = ?))";
+
+    	String SESSIONS_NEXT = "(" + Sessions.BLOCK_START + " IN (SELECT "
+    			+ Blocks.BLOCK_START + " FROM " + Tables.BLOCKS + " WHERE "
+    			+ Tables.BLOCKS + "." + Blocks.BLOCK_START 
+    			+ " >= ? ORDER BY " + Tables.BLOCKS + "." + Blocks.BLOCK_START
+    			+ " LIMIT 1))";
     }
 
     /**

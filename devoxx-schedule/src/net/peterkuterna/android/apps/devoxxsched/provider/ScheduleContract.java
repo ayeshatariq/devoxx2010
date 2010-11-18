@@ -155,6 +155,7 @@ public class ScheduleContract {
     private static final String PATH_AT = "at";
     private static final String PATH_BETWEEN = "between";
     private static final String PATH_PARALLEL = "parallel";
+    private static final String PATH_NEXT = "next";
     private static final String PATH_TAGS = "tags";
     private static final String PATH_TYPES = "types";
     private static final String PATH_SEARCH = "search";
@@ -488,6 +489,11 @@ public class ScheduleContract {
 
         public static Uri buildSessionsParallelDirUri(String sessionId) {
             return CONTENT_URI.buildUpon().appendPath(PATH_PARALLEL).appendPath(sessionId).build();
+        }
+
+        public static Uri buildSessionsNextDirUri(long time) {
+            return CONTENT_URI.buildUpon().appendPath(PATH_NEXT).appendPath(String.valueOf(time))
+            .build();
         }
 
         public static Uri buildSearchUri(String query) {

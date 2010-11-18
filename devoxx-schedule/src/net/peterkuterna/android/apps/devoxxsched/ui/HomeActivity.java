@@ -194,6 +194,12 @@ public class HomeActivity extends Activity implements AsyncQueryListener, Receiv
     public void onNowPlayingClick(View v) {
         if (!mState.mNoResults && mState.mNowPlayingUri != null) {
             startActivity(new Intent(Intent.ACTION_VIEW, mState.mNowPlayingUri));
+        } else if (mState.mNoResults) {
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setData(Sessions.buildSessionsNextDirUri(System.currentTimeMillis()));
+            intent.putExtra(Intent.EXTRA_TITLE, getString(R.string.title_next_up));
+            intent.putExtra(SessionsActivity.EXTRA_NO_WEEKDAY_HEADER, true);
+            startActivity(intent);
         }
     }
 
@@ -310,6 +316,8 @@ public class HomeActivity extends Activity implements AsyncQueryListener, Receiv
                 findViewById(R.id.now_playing).setVisibility(View.VISIBLE);
                 ((TextView) findViewById(R.id.now_playing_title)).setText(
                         R.string.now_playing_no_results);
+                ((TextView) findViewById(R.id.now_playing_subtitle)).setText(
+                        R.string.now_playing_next_up);
                 findViewById(R.id.separator_now_playing_more).setVisibility(View.GONE);
                 findViewById(R.id.now_playing_more).setVisibility(View.GONE);
             }
