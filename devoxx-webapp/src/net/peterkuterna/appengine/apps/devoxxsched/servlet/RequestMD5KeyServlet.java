@@ -39,6 +39,7 @@ public class RequestMD5KeyServlet extends HttpServlet {
 		
 		if (requestUri != null 
 				&& (requestUri.startsWith("http://cfp.devoxx.com")
+						|| requestUri.startsWith("https://cfp.devoxx.com")
 						|| requestUri.startsWith("http://devoxx2010.appspot.com"))) {
 			final PersistenceManager pm = PMF.get().getPersistenceManager();
 	

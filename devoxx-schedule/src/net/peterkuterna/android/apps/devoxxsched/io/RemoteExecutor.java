@@ -40,6 +40,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import android.content.ContentResolver;
+import android.util.Log;
 
 
 /**
@@ -82,6 +83,7 @@ public class RemoteExecutor {
         try {
             final HttpResponse resp = mHttpClient.execute(request);
             final int status = resp.getStatusLine().getStatusCode();
+            Log.d("RemoteExecutor", "status = " + status);
             if (status != HttpStatus.SC_OK) {
                 throw new JSONHandlerException("Unexpected server response " + resp.getStatusLine()
                         + " for " + request.getRequestLine());

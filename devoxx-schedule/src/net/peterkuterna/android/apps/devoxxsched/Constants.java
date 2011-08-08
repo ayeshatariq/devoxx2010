@@ -21,7 +21,7 @@ package net.peterkuterna.android.apps.devoxxsched;
  */
 public class Constants {
 
-	public static final String REST_BASE_URL = "http://cfp.devoxx.com/rest/v1/";
+	public static final String REST_BASE_URL = "https://cfp.devoxx.com/rest/v1/";
 	public static final String PRESENTATIONS_URL = REST_BASE_URL + "events/1/presentations";
 	public static final String SPEAKERS_URL = REST_BASE_URL + "events/1/speakers";
 	public static final String ROOMS_URL = REST_BASE_URL + "events/1/schedule/rooms";

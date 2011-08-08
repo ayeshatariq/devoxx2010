@@ -22,6 +22,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.zip.GZIPInputStream;
 
+import javax.net.ssl.HostnameVerifier;
+
 import net.peterkuterna.android.apps.devoxxsched.provider.ScheduleContract.Sync;
 
 import org.apache.http.Header;
@@ -40,6 +42,8 @@ import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.conn.ssl.X509HostnameVerifier;
 import org.apache.http.entity.HttpEntityWrapper;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
@@ -58,6 +62,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.net.Uri;
 import android.text.format.DateUtils;
+import android.util.Log;
 
 
 public class SyncUtils {
@@ -77,14 +82,18 @@ public class SyncUtils {
         final HttpParams params = new BasicHttpParams();
 
         // Use generous timeouts for slow mobile networks
-        HttpConnectionParams.setConnectionTimeout(params, 20 * SECOND_IN_MILLIS);
-        HttpConnectionParams.setSoTimeout(params, 20 * SECOND_IN_MILLIS);
+        HttpConnectionParams.setConnectionTimeout(params, 200 * SECOND_IN_MILLIS);
+        HttpConnectionParams.setSoTimeout(params, 200 * SECOND_IN_MILLIS);
 
         HttpConnectionParams.setSocketBufferSize(params, 8192);
         HttpProtocolParams.setUserAgent(params, buildUserAgent(context));
-
+        
+        final HostnameVerifier hostnameVerifier = org.apache.http.conn.ssl.SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER;
+        final SSLSocketFactory sslSocketFactory = SSLSocketFactory.getSocketFactory();
+        sslSocketFactory.setHostnameVerifier((X509HostnameVerifier) hostnameVerifier);
         final SchemeRegistry schemeReg = new SchemeRegistry();
         schemeReg.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+        schemeReg.register(new Scheme("https", sslSocketFactory, 443));
         final ClientConnectionManager connectionManager = new ThreadSafeClientConnManager(params, schemeReg);
         final DefaultHttpClient client = new DefaultHttpClient(connectionManager, params);
 
@@ -166,6 +175,9 @@ public class SyncUtils {
     public static void updateLocalMd5(ContentResolver resolver, String url, String md5) {
         final String syncId = Sync.generateSyncId(url);
         final ContentValues contentValues = new ContentValues();
+        Log.d("SyncUtils", "syncId = " + syncId);
+        Log.d("SyncUtils", "url = " + url);
+        Log.d("SyncUtils", "md5 = " + md5);
         contentValues.put(Sync.URI_ID, syncId);
         contentValues.put(Sync.URI, url);
         contentValues.put(Sync.MD5, md5);
